@@ -1,0 +1,113 @@
+import React from "react";
+import { motion, Variants } from "framer-motion";
+import { Coffee, CheckCircle2, Navigation } from "lucide-react";
+import { ExtendedItineraryItem } from "@/types/notion";
+import { getTypeLabel, getStatusColor, parseMinutes } from "@/lib/utils";
+
+// Variants
+const fadeInUp: Variants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { opacity: 1, y: 0 }
+};
+
+interface ItineraryCardProps {
+    item: ExtendedItineraryItem;
+    prevItem?: ExtendedItineraryItem;
+    onClick: (item: ExtendedItineraryItem) => void;
+}
+
+export const ItineraryCard = ({ item, prevItem, onClick }: ItineraryCardProps) => {
+    // Time Gap Logic
+    let showGap = false;
+    let gapMinutes = 0;
+    
+    if (prevItem && prevItem.time !== 'TBD' && item.time !== 'TBD') {
+        const prevMins = parseMinutes(prevItem.time);
+        const currMins = parseMinutes(item.time);
+        gapMinutes = currMins - prevMins;
+        // Threshold: 30 mins
+        if (gapMinutes > 30) {
+            showGap = true;
+        }
+    }
+
+    return (
+        <React.Fragment>
+            {showGap && (
+                <motion.div 
+                    variants={fadeInUp}
+                    className="flex items-center gap-4 py-2 opacity-50"
+                >
+                    <div className="w-12 text-right">
+                            <span className="text-[10px] text-zinc-600 font-mono">+{Math.floor(gapMinutes / 60)}h {gapMinutes % 60}m</span>
+                    </div>
+                    <div className="flex-1 border-t border-dashed border-zinc-700 flex items-center justify-center relative">
+                            <div className="absolute bg-zinc-950 px-2 text-[10px] text-zinc-500 flex items-center gap-1">
+                            <Coffee size={10} />
+                            自由時間
+                            </div>
+                    </div>
+                </motion.div>
+            )}
+
+            <motion.div 
+            variants={fadeInUp}
+            className="relative flex items-center gap-4 group cursor-pointer"
+            onClick={() => onClick(item)}
+            >
+            <div className="w-12 text-right">
+                <span className={`text-sm font-mono font-medium block ${item.status === 'Done' ? 'text-zinc-600 line-through' : 'text-zinc-500'}`}>{item.time}</span>
+            </div>
+
+            <div className="relative z-10 flex-shrink-0">
+                <div 
+                    onClick={(e) => {
+                    if (item.mapsUrl) {
+                        e.stopPropagation();
+                        window.open(item.mapsUrl, '_blank');
+                    }
+                    }}
+                    className={`relative w-14 h-14 rounded-sm border border-zinc-800 bg-zinc-900 overflow-hidden transition-all ${item.mapsUrl ? 'active:scale-95 active:border-white ring-offset-2 ring-offset-zinc-950 hover:border-zinc-500' : ''}`}
+                >
+                <img 
+                    src={item.coverImage} 
+                    className={`w-full h-full object-cover transition-opacity ${item.status === 'Done' ? 'opacity-40 grayscale' : ''}`}
+                    alt={item.title}
+                />
+                {item.status === 'Done' && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                        <CheckCircle2 size={20} className="text-emerald-500" />
+                    </div>
+                )}
+                {item.mapsUrl && item.status !== 'Done' && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Navigation size={16} className="text-white drop-shadow-md" />
+                    </div>
+                )}
+                </div>
+            </div>
+
+            <div className="flex-1 border-b border-zinc-900 pb-6 pt-1 group-last:border-0">
+                <div className="flex justify-between items-start">
+                    <h3 className={`font-medium text-base transition-colors ${item.status === 'Done' ? 'text-zinc-500 line-through' : 'text-zinc-200 group-hover:text-white'}`}>{item.title}</h3>
+                    {item.cost && item.cost > 0 && (
+                        <span className="text-[10px] font-mono text-zinc-600 mt-1">¥{item.cost.toLocaleString()}</span>
+                    )}
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                <span className="text-[10px] font-mono text-zinc-500 uppercase px-1.5 py-0.5 bg-zinc-900 rounded border border-zinc-800">
+                    {getTypeLabel(item.type)}
+                </span>
+                <span className="text-xs text-zinc-600">•</span>
+                <span className="text-xs text-zinc-500">{item.area}</span>
+                {item.status !== 'Scheduled' && item.status !== 'Done' && (
+                    <span className={`ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-sm uppercase ${getStatusColor(item.status)} text-white`}>
+                        {item.status}
+                    </span>
+                )}
+                </div>
+            </div>
+            </motion.div>
+        </React.Fragment>
+    );
+};

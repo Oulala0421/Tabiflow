@@ -1,5 +1,5 @@
 export type ItineraryStatus = "Inbox" | "To Review" | "Scheduled" | "Done";
-export type ItineraryType = "food" | "transport" | "activity" | "shop" | "stay";
+export type ItineraryType = "food" | "transport" | "activity" | "shop" | "stay" | "manual" | "ai";
 
 export interface TransportInfo {
   mode?: string;
@@ -37,7 +37,12 @@ export interface ItineraryItem {
   accommodation?: AccommodationInfo;
 }
 
-// Partial interface representing the raw Notion structure (simplified for reference)
+export interface ExtendedItineraryItem extends ItineraryItem {
+    cost?: number;
+    currency?: 'JPY' | 'TWD';
+}
+
+// Partial interface representing the raw Notion structure
 export interface NotionPage {
   id: string;
   properties: {

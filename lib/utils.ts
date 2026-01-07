@@ -1,4 +1,10 @@
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 import { ItineraryStatus, ItineraryType } from "@/types/notion";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 // Helper for translation
 export const getTypeLabel = (type: string) => {

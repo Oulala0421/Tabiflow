@@ -170,23 +170,42 @@ export const QuickCapture = ({
         onClose();
       }
     } else {
+      // AI Mode: Fire-and-forget to /api/capture
       if (url.trim()) {
         setIsAnalyzing(true);
-        // Simulate AI Network Request
-        setTimeout(() => {
-          onSave({ 
-            title: "AI 分析地點", 
-            date: isInboxMode ? "" : date,
-            time: isInboxMode ? "TBD" : (time || "待定"), 
-            area: area || "待定", 
-            url, 
-            context,
-            type: 'ai',
+
+        // Call capture API
+        fetch('/api/inbox', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            url,
+            title: url, // Use URL as temporary title
+            date: isInboxMode ? undefined : date,
+            area: area || undefined,
             status: isInboxMode ? 'Inbox' : 'Scheduled',
-            cost: 0
+          }),
+        })
+          .then(async (response) => {
+            if (response.ok) {
+              const data = await response.json();
+              // Notify parent to refresh
+              onSave({
+                type: 'ai',
+                status: isInboxMode ? 'Inbox' : 'Scheduled',
+              });
+              onClose();
+            } else {
+              throw new Error('Failed to capture');
+            }
+          })
+          .catch((error) => {
+            console.error('Capture failed:', error);
+            alert('加入失敗,請稍後再試');
+            setIsAnalyzing(false);
           });
-          onClose();
-        }, 1500);
       }
     }
   };

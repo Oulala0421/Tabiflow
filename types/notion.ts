@@ -1,5 +1,6 @@
 export type ItineraryStatus = "Inbox" | "To Review" | "Scheduled" | "Done";
 export type ItineraryType = "food" | "transport" | "activity" | "shop" | "stay" | "manual" | "ai";
+export type AIProcessingStatus = "Pending" | "Processing" | "Done" | "Error";
 
 export interface TransportInfo {
   mode?: string;
@@ -33,6 +34,8 @@ export interface ItineraryItem {
   summary: string; // Markdown supported
   coverImage: string;
   lastEdited: string;
+  url?: string | null; // Original URL for AI processing
+  aiProcessing?: AIProcessingStatus; // AI processing state
   transport?: TransportInfo;
   accommodation?: AccommodationInfo;
 }
@@ -51,8 +54,10 @@ export interface NotionPage {
     Status: { status: { name: string } | null };
     Area: { select: { name: string } | null };
     Category: { multi_select: { name: string }[] };
-    "Google Maps": { url: string | null };
+    "Maps URL": { url: string | null };
     "AI Summary": { rich_text: { plain_text: string }[] };
+    URL: { url: string | null }; // Original URL for AI processing
+    "AI Processing": { select: { name: string } | null }; // Processing state: Pending/Processing/Done/Error
   };
   cover: { type: "external" | "file"; external?: { url: string }; file?: { url: string } } | null;
   last_edited_time: string;

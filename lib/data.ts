@@ -168,13 +168,36 @@ export const INITIAL_DATA: ExtendedItineraryItem[] = [
   }
 ];
 
-export const DATES = [
-  { label: "30", full: "2023-10-30", day: "週一", month: "10月" },
-  { label: "31", full: "2023-10-31", day: "週二", month: "10月" },
-  { label: "01", full: "2023-11-01", day: "週三", month: "11月" },
-  { label: "02", full: "2023-11-02", day: "週四", month: "11月" },
-  { label: "03", full: "2023-11-03", day: "週五", month: "11月" },
-];
+/**
+ * Generate dynamic dates array (7-day window from today)
+ * Best practice: Use dynamic data generation for date-sensitive UIs
+ */
+export const generateDates = () => {
+  const dates = [];
+  const today = new Date();
+  
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(today);
+    date.setDate(today.getDate() + i);
+    
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const dayOfWeek = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'][date.getDay()];
+    
+    dates.push({
+      label: String(day).padStart(2, '0'),
+      full: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+      day: dayOfWeek,
+      month: `${month}月`
+    });
+  }
+  
+  return dates;
+};
+
+// Export memoized version for performance
+export const DATES = generateDates();
 
 export const TIME_OPTIONS_30_MIN = (() => {
   const options = [];

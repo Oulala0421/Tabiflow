@@ -42,10 +42,10 @@ const staggerContainer: Variants = {
 };
 
 export default function App() {
-  const [items, setItems] = useState<ExtendedItineraryItem[]>(INITIAL_DATA);
+  const [items, setItems] = useState<ExtendedItineraryItem[]>([]);
   const [editingItem, setEditingItem] = useState<ExtendedItineraryItem | null>(null);
   const [viewMode, setViewMode] = useState<'timeline' | 'inbox'>('timeline'); 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Toast State
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -59,6 +59,27 @@ export default function App() {
   const removeToast = (id: string) => {
      setToasts(prev => prev.filter(t => t.id !== id));
   };
+
+  // Fetch Data
+  const fetchItems = async () => {
+    try {
+      const res = await fetch('/api/inbox');
+      if (!res.ok) throw new Error("Failed to fetch");
+      const data = await res.json();
+      setItems(data);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Fetch error:", error);
+      // addToast("無法載入資料", 'error'); 
+    }
+  };
+
+  // Initial Fetch & Polling
+  useEffect(() => {
+    fetchItems();
+    const interval = setInterval(fetchItems, 5000); // Poll every 5s
+    return () => clearInterval(interval);
+  }, []);
 
   // Current time state
   const [now, setNow] = useState(new Date());
@@ -79,19 +100,23 @@ export default function App() {
         String(now.getDate()).padStart(2, '0')
       ].join('-');
       
-      const found = DATES.find(d => d.full === today);
-      return found ? found.full : DATES[0].full;
+      return today; // Always use today's date as default
     } catch (e) {
-      return DATES[0].full;
+      console.error('Date initialization error:', e);
+      const now = new Date();
+      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     }
   });
 
-  // Skeleton Loading Logic
+  // Skeleton Loading Logic (Only on initial load or date switch if needed, but here generic)
+  /* 
   useEffect(() => {
      setIsLoading(true);
      const timer = setTimeout(() => setIsLoading(false), 600);
      return () => clearTimeout(timer);
   }, [selectedDate, viewMode]);
+  */ 
+  // Disable fake skeleton logic, rely on real data loading state
 
   const [selectedItem, setSelectedItem] = useState<ExtendedItineraryItem | null>(null);
   const [isQuickCaptureOpen, setIsQuickCaptureOpen] = useState(false);
@@ -136,12 +161,27 @@ export default function App() {
 
   const displayTimelineItems = timelineItems.filter(item => item.id !== heroItem?.id);
 
-  const handleStatusChange = (id: string, newStatus: ItineraryStatus) => {
+  const handleStatusChange = async (id: string, newStatus: ItineraryStatus) => {
+      // Optimistic Update
+      const oldItems = [...items];
       setItems(items.map(i => i.id === id ? { ...i, status: newStatus } : i));
+
+      try {
+        await fetch(`/api/inbox/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus })
+        });
+        addToast(`狀態已更新為：${getStatusLabel(newStatus)}`, 'success');
+        fetchItems(); // Sync
+      } catch (e) {
+        setItems(oldItems); // Revert
+        addToast("更新失敗", "error");
+      }
+
       if (selectedItem && selectedItem.id === id) {
           setSelectedItem({ ...selectedItem, status: newStatus });
       }
-      addToast(`狀態已更新為：${getStatusLabel(newStatus)}`, 'success');
   };
 
   const handleEditClick = (item: ExtendedItineraryItem) => {
@@ -149,19 +189,19 @@ export default function App() {
       setSelectedItem(null); 
   };
 
-  const handleDeleteItem = (id: string) => {
-      const deletedItem = items.find(i => i.id === id);
-      setItems(items.filter(i => i.id !== id));
-      setSelectedItem(null);
-      addToast("已刪除行程", 'info', () => {
-          if (deletedItem) {
-              setItems(prev => [...prev, deletedItem]);
-              addToast("已復原刪除", 'success');
-          }
-      });
+  const handleDeleteItem = async (id: string) => {
+      try {
+          await fetch(`/api/inbox/${id}`, { method: 'DELETE' });
+          setItems(items.filter(i => i.id !== id));
+          setSelectedItem(null);
+          addToast("已刪除行程", 'info');
+          // No undo for API delete easily unless we implement restore or soft delete specific logic
+      } catch (e) {
+          addToast("刪除失敗", "error");
+      }
   };
 
-  const handleUpdateItem = (data: any) => {
+  const handleUpdateItem = async (data: any) => {
       setEditingItem(null);
       setIsQuickCaptureOpen(false);
 
@@ -173,7 +213,7 @@ export default function App() {
       if (type === 'transport') {
         const mode = data.transportMode || "交通工具";
         if (!data.id) {
-             finalTitle = `前往 ${data.title}`;
+             finalTitle = `前往 ${data.title}`; // Only add prefix for new items
         } else {
              finalTitle = data.title;
         }
@@ -191,50 +231,49 @@ export default function App() {
          accommodationInfo = data.accommodation;
       }
 
-      let summaryText = "";
-      if (data.memo) {
-         summaryText = data.memo; 
-      } else {
-         if (type === 'transport') {
-            summaryText += `預計搭乘 ${data.transportMode || "交通工具"} 前往 ${data.title}\n\n`;
-         } else if (type === 'stay') {
-            summaryText += "住宿行程\n\n";
-         } else {
-            summaryText += "手動新增項目\n\n";
-         }
-      }
-      
-      if (data.websiteUrl) {
-         if (!summaryText.includes(data.websiteUrl)) {
-             summaryText += `\n🔗 網站: ${data.websiteUrl}`;
-         }
+      let summaryText = data.memo || "";
+      // Construct summary if empty
+      if (!summaryText) {
+         if (type === 'transport') summaryText = `預計搭乘 ${data.transportMode} 前往 ${data.title}`;
+         else if (type === 'stay') summaryText = "住宿行程";
       }
 
-      const newItem: ExtendedItineraryItem = {
-        id: data.id || Date.now().toString(),
+      if (data.websiteUrl && !summaryText.includes(data.websiteUrl)) {
+          summaryText += `\n🔗 網站: ${data.websiteUrl}`;
+      }
+
+      const payload = {
         title: finalTitle,
-        time: data.time,
+        time: data.time === "待定" ? "TBD" : data.time,
         area: type === 'transport' ? "交通" : (data.area || "待定"),
-        type: type,
         status: data.status,
-        categories: [],
-        mapsUrl: data.mapsUrl || null,
-        date: data.date, 
-        coverImage: getImageForType(type),
-        summary: summaryText.trim(),
-        lastEdited: new Date().toISOString(),
-        transport: transportInfo,
-        accommodation: accommodationInfo,
+        mapsUrl: data.mapsUrl,
+        date: data.date,
+        summary: summaryText,
         cost: data.cost,
-        currency: 'JPY'
+        categories: [getTypeLabel(type)], // Simple category mapping
+        // Logic to pass transport/accommodation details? 
+        // Notion schema doesn't have detailed transport struct, so we might lose it or stuff it in summary.
+        // For now, let's keep it simple as per schema.
       };
 
-      if (data.id) {
-          setItems(items.map(i => i.id === data.id ? newItem : i));
-          addToast("行程已更新", 'success');
-      } else {
-          setItems([...items, newItem]);
-          addToast("已新增行程", 'success');
+      try {
+        if (data.id) {
+           await fetch(`/api/inbox/${data.id}`, {
+               method: 'PATCH',
+               body: JSON.stringify(payload)
+           });
+           addToast("行程已更新", 'success');
+        } else {
+           await fetch('/api/inbox', {
+               method: 'POST',
+               body: JSON.stringify(payload)
+           });
+           addToast("已新增行程", 'success');
+        }
+        fetchItems();
+      } catch (e) {
+        addToast("儲存失敗", "error");
       }
   };
 

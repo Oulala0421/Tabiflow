@@ -99,6 +99,9 @@ export const getItinerary = async (): Promise<ItineraryItem[]> => {
       // Extract AI Processing Status
       const aiProcessing = props["AI Processing"]?.select?.name || undefined;
 
+      // Extract Cost
+      const cost = props["預算 (Cost)"]?.number || 0;
+
       // Extract Cover Image
       let coverImage = "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&q=80"; // Fallback
       if (typedPage.cover) {
@@ -129,7 +132,10 @@ export const getItinerary = async (): Promise<ItineraryItem[]> => {
         coverImage,
         lastEdited: typedPage.last_edited_time,
         url,
+        lastEdited: typedPage.last_edited_time,
+        url,
         aiProcessing,
+        cost,
       };
     });
 
@@ -258,7 +264,10 @@ export const updatePage = async (
     mapsUrl?: string;
     categories?: string[];
     status?: string;
-    date?: string; // ISO string 2026-01-10
+    status?: string;
+    date?: string; // ISO string YYYY-MM-DD
+    time?: string; // HH:mm
+    cost?: number;
   }
 ): Promise<void> => {
   try {
@@ -324,11 +333,27 @@ export const updatePage = async (
       };
     }
 
+      };
+    }
+
     if (updates.date) {
+      // Combine Date and Time if provided
+      let startInfo: string = updates.date;
+      if (updates.time && updates.time !== "TBD" && updates.time !== "待定") {
+        startInfo = `${updates.date}T${updates.time}:00`;
+      }
+
       properties["日期 (Date)"] = {
         date: {
-          start: updates.date,
+          start: startInfo,
+          // We can also infer time_zone if needed, usually Defaults to local
         },
+      };
+    }
+
+    if (updates.cost !== undefined) {
+      properties["預算 (Cost)"] = {
+        number: updates.cost,
       };
     }
 

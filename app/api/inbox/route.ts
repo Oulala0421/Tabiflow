@@ -33,7 +33,13 @@ export async function POST(req: NextRequest) {
         );
     }
 
-    const { url, title, status, date, time, area, categories, summary, mapsUrl, cost } = body;
+    const { 
+        url, title, status, date, time, area, categories, summary, mapsUrl, cost, 
+        transportMode, accommodation 
+    } = body;
+
+    // Construct Transport object if mode exists
+    const transport = transportMode ? { mode: transportMode, from: area } : undefined;
 
     const id = await createPage({
         title: title || url,
@@ -46,7 +52,9 @@ export async function POST(req: NextRequest) {
         categories,
         summary,
         mapsUrl,
-        cost
+        cost,
+        transport,
+        accommodation
     });
 
     console.log(`[API /inbox POST] Created page with ID: ${id}`);

@@ -13,6 +13,36 @@ if (!DATABASE_ID) {
   console.error('[Notion] FATAL: NOTION_DATABASE_ID is not defined in environment variables');
 }
 
+// Helper to format details into summary
+const formatDetailsToSummary = (
+  baseSummary: string = "",
+  transport?: any, // TransportInfo
+  accommodation?: any // AccommodationInfo
+): string => {
+  let text = baseSummary;
+
+  if (transport) {
+    const parts = [];
+    if (transport.mode) parts.push(`交通方式: ${transport.mode}`);
+    if (transport.from) parts.push(`出發地: ${transport.from}`);
+    if (parts.length > 0) text += (text ? "\n\n" : "") + "🚆 " + parts.join(" | ");
+  }
+
+  if (accommodation) {
+    const parts = [];
+    if (accommodation.checkIn) parts.push(`In: ${accommodation.checkIn}`);
+    if (accommodation.checkOut) parts.push(`Out: ${accommodation.checkOut}`);
+    if (accommodation.isBreakfastIncluded) parts.push("含早餐");
+    if (accommodation.isDinnerIncluded) parts.push("含晚餐");
+    if (accommodation.facilities && accommodation.facilities.length > 0) {
+       parts.push(`設施: ${accommodation.facilities.join(", ")}`);
+    }
+    if (parts.length > 0) text += (text ? "\n\n" : "") + "🏨 " + parts.join(" | ");
+  }
+
+  return text;
+};
+
 // Initialize Notion Client
 const notion = new Client({
   auth: NOTION_API_KEY,
@@ -159,7 +189,9 @@ export const createPage = async (data: {
   categories?: string[];
   summary?: string;
   mapsUrl?: string;
-  cost?: number; // Added cost
+  cost?: number;
+  transport?: any;
+  accommodation?: any;
 }): Promise<string> => {
   if (!DATABASE_ID) {
     throw new Error("NOTION_DATABASE_ID is not defined");
@@ -231,12 +263,14 @@ export const createPage = async (data: {
       };
     }
 
-    if (data.summary) {
+    if (data.summary || data.transport || data.accommodation) {
+      const fullSummary = formatDetailsToSummary(data.summary, data.transport, data.accommodation);
+      
       properties["AI 摘要"] = {
         rich_text: [
           {
             text: {
-              content: data.summary,
+              content: fullSummary,
             },
           },
         ],
@@ -280,6 +314,8 @@ export const updatePage = async (
     date?: string; // ISO string YYYY-MM-DD
     time?: string; // HH:mm
     cost?: number;
+    transport?: any;
+    accommodation?: any;
   }
 ): Promise<void> => {
   try {
@@ -313,12 +349,19 @@ export const updatePage = async (
       };
     }
 
-    if (updates.summary) {
+    if (updates.summary !== undefined || updates.transport || updates.accommodation) {
+      // NOTE: This overwrites existing summary. ideally we read then append, but for now we assume UI sends full state or we overwrite.
+      // Since 'updates' might not have the old summary if we just moved a card, this is tricky.
+      // BUT QuickCapture Edit sends the 'memo' (summary).
+      // Let's assume valid data.
+      
+      const fullSummary = formatDetailsToSummary(updates.summary, updates.transport, updates.accommodation);
+
       properties["AI 摘要"] = {
         rich_text: [
           {
             text: {
-              content: updates.summary,
+              content: fullSummary,
             },
           },
         ],

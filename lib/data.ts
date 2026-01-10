@@ -23,6 +23,13 @@ export const getImageForType = (type: ItineraryType) => {
     }
   };
 
+// Helper to get date string relative to today
+const getRelativeDate = (offset: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + offset);
+  return d.toISOString().split('T')[0];
+};
+
 export const INITIAL_DATA: ExtendedItineraryItem[] = [
   {
     id: "1",
@@ -33,7 +40,7 @@ export const INITIAL_DATA: ExtendedItineraryItem[] = [
     status: "Scheduled",
     categories: ["咖啡廳", "早午餐"],
     mapsUrl: "https://goo.gl/maps/example",
-    date: "2023-10-30",
+    date: getRelativeDate(0), // Today
     coverImage: MOCK_IMAGES.cafe,
     summary: "以淺焙咖啡和復古家具聞名。必點挪威鬆餅，早上去氣氛最好。",
     lastEdited: new Date().toISOString(),
@@ -49,7 +56,7 @@ export const INITIAL_DATA: ExtendedItineraryItem[] = [
     status: "Scheduled",
     categories: ["公園", "景觀"],
     mapsUrl: "https://goo.gl/maps/example",
-    date: "2023-10-30",
+    date: getRelativeDate(0), // Today
     coverImage: MOCK_IMAGES.park,
     summary: "免費的屋頂花園，可俯瞰澀谷十字路口與周邊美景。適合購物後休息片刻。",
     lastEdited: new Date().toISOString(),
@@ -81,7 +88,7 @@ export const INITIAL_DATA: ExtendedItineraryItem[] = [
     status: "Scheduled",
     categories: ["電車"],
     mapsUrl: "",
-    date: "2023-10-31",
+    date: getRelativeDate(1), // Tomorrow
     coverImage: MOCK_IMAGES.train,
     summary: "搭乘山手線外回線，注意避開車頭車尾人潮。",
     lastEdited: new Date().toISOString(),
@@ -106,7 +113,7 @@ export const INITIAL_DATA: ExtendedItineraryItem[] = [
     status: "Scheduled",
     categories: ["美食", "串燒"],
     mapsUrl: "",
-    date: "2023-10-31",
+    date: getRelativeDate(1), // Tomorrow
     coverImage: MOCK_IMAGES.food,
     summary: "充滿昭和風情的小巷。大部分店家中午就開始營業，推薦嘗試鰻魚串。",
     lastEdited: new Date().toISOString(),
@@ -136,7 +143,7 @@ export const INITIAL_DATA: ExtendedItineraryItem[] = [
     status: "Scheduled",
     categories: ["市場", "早餐"],
     mapsUrl: "",
-    date: "2023-11-02",
+    date: getRelativeDate(2), // Day after tomorrow
     coverImage: MOCK_IMAGES.market,
     summary: "先去排玉子燒。早上 9 點後人潮會非常多，建議提早抵達。",
     lastEdited: new Date().toISOString(),
@@ -152,7 +159,7 @@ export const INITIAL_DATA: ExtendedItineraryItem[] = [
     status: "Scheduled",
     categories: ["住宿", "飯店"],
     mapsUrl: "https://goo.gl/maps/exampleHotel",
-    date: "2023-10-31",
+    date: getRelativeDate(1), // Tomorrow
     coverImage: MOCK_IMAGES.hotel,
     summary: "位於歌舞伎町中心，交通便利。頂樓設有大浴場。",
     lastEdited: new Date().toISOString(),
@@ -176,7 +183,7 @@ export const generateDates = () => {
   const dates = [];
   const today = new Date();
   
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < 14; i++) {
     const date = new Date(today);
     date.setDate(today.getDate() + i);
     

@@ -11,34 +11,42 @@ export interface AnalysisResult {
   mapsUrl: string | null;
 }
 
-export const analyzeContent = async (text: string): Promise<AnalysisResult> => {
+export const analyzeContent = async (url: string): Promise<AnalysisResult> => {
   if (!apiKey) {
-    throw new Error("GEMINI_API_KEY is not defined");
+    console.warn("GEMINI_API_KEY is not defined, returning fallback.");
+    return fallbackResult(url);
   }
 
-  const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
-    generationConfig: {
-      responseMimeType: "application/json",
-    },
-  });
+  try {
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash",
+      generationConfig: {
+        responseMimeType: "application/json",
+      },
+    });
 
-  const prompt = `
-    You are a travel assistant. Analyze the following web content and extract key information for a travel itinerary.
-    Return strictly JSON format.
+    const prompt = `
+    You are a travel assistant. I will provide a URL.
+    Please infer the travel details based on the structure of the URL or your knowledge base.
+    
+    URL: ${url}
 
-    Required Fields:
-    - title: specific place name (e.g. "Fuglen Tokyo", not the webpage title)
-    - summary: 2-3 sentences in Traditional Chinese (Taiwan), practical tips for travelers.
-    - area: The specific district (e.g. Shibuya, Shinjuku, Kyoto).
-    - category: Array of strings (e.g. ["Food", "Cafe"], ["Transport"], ["Activity"]).
-    - mapsUrl: Google Maps URL if found, otherwise null.
-
-    Content:
-    ${text.substring(0, 15000)} // Truncate to avoid context limit
+    Task:
+    1. Identify the specific place (Restaurant, Hotel, Attraction, etc).
+    2. Provide a practical summary in Traditional Chinese (Taiwan) [繁體中文].
+    3. Categorize it.
+    4. If it's a Google Maps URL, extract coordinates or place ID if possible (symbolically), or just pass the URL back as mapsUrl.
+    
+    Return strictly JSON format:
+    {
+        "title": "Place Name (Traditional Chinese preferred)",
+        "summary": "2-3 sentences practical tips",
+        "area": "District Name (e.g. Shibuya, Kyoto)",
+        "category": ["Food" | "Shop" | "Activity" | "Stay" | "Transport"],
+        "mapsUrl": "${url}" 
+    }
   `;
 
-  try {
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const jsonText = response.text();
@@ -46,13 +54,22 @@ export const analyzeContent = async (text: string): Promise<AnalysisResult> => {
 
     return {
       title: data.title || "Unknown Title",
-      summary: data.summary || "No summary available.",
+      summary: data.summary || "",
       area: data.area || "Unknown Area",
-      category: data.category || ["General"],
-      mapsUrl: data.mapsUrl || null,
+      category: data.category || ["Activity"],
+      mapsUrl: data.mapsUrl || url,
     };
+
   } catch (error) {
     console.error("Gemini Analysis Failed:", error);
-    throw new Error("AI Analysis Failed");
+    return fallbackResult(url);
   }
 };
+
+const fallbackResult = (url: string): AnalysisResult => ({
+  title: "New Item",
+  summary: "Processed without AI details.",
+  area: "Unknown",
+  category: ["Activity"],
+  mapsUrl: url,
+});

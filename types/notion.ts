@@ -49,13 +49,13 @@ export interface ExtendedItineraryItem extends ItineraryItem {
 export interface NotionPage {
   id: string;
   properties: {
-    Name: { title: { plain_text: string }[] };
-    Date: { date: { start: string } | null };
-    Status: { status: { name: string } | null };
-    Area: { select: { name: string } | null };
-    Category: { multi_select: { name: string }[] };
-    "Maps URL": { url: string | null };
-    "AI Summary": { rich_text: { plain_text: string }[] };
+    "地點名稱": { title: { plain_text: string }[] };
+    "日期 (Date)": { date: { start: string } | null };
+    "處理狀態": { status: { name: string } | null };
+    "區域 (Area)": { select: { name: string } | null };
+    "類別 (Type)": { multi_select: { name: string }[] };
+    "Google Maps": { url: string | null };
+    "AI 摘要": { rich_text: { plain_text: string }[] };
     URL: { url: string | null }; // Original URL for AI processing
     "AI Processing": { select: { name: string } | null }; // Processing state: Pending/Processing/Done/Error
   };

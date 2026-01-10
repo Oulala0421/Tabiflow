@@ -175,7 +175,7 @@ export const QuickCapture = ({
         setIsAnalyzing(true);
 
         // Call capture API
-        fetch('/api/inbox', {
+        fetch('/api/capture', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

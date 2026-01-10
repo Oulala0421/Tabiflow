@@ -18,6 +18,7 @@ const notion = new Client({
   auth: NOTION_API_KEY,
 });
 
+
 /**
  * Helper to determine the primary type icon/color based on Notion categories
  */
@@ -43,55 +44,60 @@ export const getItinerary = async (): Promise<ItineraryItem[]> => {
     const response = await notion.databases.query({
       database_id: DATABASE_ID,
       filter: {
-        property: "Status",
+        property: "處理狀態",
         status: {
           does_not_equal: "Done",
         },
       },
-      sorts: [
+      /* sorts: [
         {
           property: "Date",
           direction: "ascending",
         },
-      ],
+      ], */
     });
 
     const items = response.results.map((page: any) => {
+      // DEBUG: Log key names for the first item to verify schema
+      if (response.results.indexOf(page) === 0) {
+           console.log("[Notion Schema Debug] Properties:", Object.keys(page.properties));
+           // console.log(JSON.stringify(page.properties, null, 2)); 
+      }
+      
       // Cast the raw page to our partial NotionPage structure for safer access
       const typedPage = page as NotionPage;
       const props = typedPage.properties;
 
       // Extract Title
-      const title = props.Name.title[0]?.plain_text || "Untitled";
+      const title = props["地點名稱"]?.title[0]?.plain_text || "Untitled";
 
       // Extract Date & Time
-      const rawDate = props.Date.date?.start || new Date().toISOString();
+      const rawDate = props["日期 (Date)"]?.date?.start || new Date().toISOString();
       const dateObj = new Date(rawDate);
       const dateStr = rawDate.split("T")[0]; // YYYY-MM-DD
-      // Check if the ISO string implies a specific time (Notion usually omits time if "Include time" is off)
       const hasTime = rawDate.includes("T");
       const timeStr = hasTime 
         ? dateObj.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false }) 
         : "TBD";
 
       // Extract Area
-      const area = props.Area.select?.name || "Unknown Area";
+      const area = props["區域 (Area)"]?.select?.name || "Unknown Area";
 
       // Extract Categories
-      const categories = props.Category.multi_select.map((c) => c.name);
+      const categories = props["類別 (Type)"]?.multi_select?.map((c) => c.name) || [];
       const type = mapCategoryToType(categories);
 
       // Extract Summary
-      const summary = props["AI Summary"].rich_text.map((t) => t.plain_text).join("") || "";
+      const summary = props["AI 摘要"]?.rich_text?.map((t) => t.plain_text).join("") || "";
 
       // Extract Maps URL
-      const mapsUrl = props["Maps URL"].url || null;
+      const mapsUrl = props["Google Maps"]?.url || null;
 
       // Extract URL (for AI processing)
       const url = props.URL?.url || null;
 
       // Extract AI Processing Status
-      const aiProcessing = props["AI Processing"]?.select?.name as any || undefined;
+      const aiProcessing = props["AI Processing"]?.select?.name || undefined;
 
       // Extract Cover Image
       let coverImage = "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&q=80"; // Fallback
@@ -103,8 +109,11 @@ export const getItinerary = async (): Promise<ItineraryItem[]> => {
         }
       }
 
-      // Map Status
-      const status: any = props.Status.status?.name || "Inbox";
+      // Map Status - Cast to specific union type defined in types/notion
+      const rawStatus = props["處理狀態"]?.status?.name || "Inbox";
+      const status = ["Inbox", "To Review", "Scheduled", "Done"].includes(rawStatus) 
+        ? rawStatus 
+        : "Inbox";
 
       return {
         id: typedPage.id,
@@ -124,9 +133,9 @@ export const getItinerary = async (): Promise<ItineraryItem[]> => {
       };
     });
 
-    return items;
+    return items as ItineraryItem[];
   } catch (error) {
-    console.error("Failed to fetch Notion itinerary:", error);
+    console.error("[Notion] Failed to fetch itinerary:", error);
     return [];
   }
 };
@@ -151,7 +160,7 @@ export const createPage = async (data: {
 
   try {
     const properties: any = {
-      Name: {
+      "地點名稱": {
         title: [
           {
             text: {
@@ -160,7 +169,7 @@ export const createPage = async (data: {
           },
         ],
       },
-      Status: {
+      "處理狀態": {
         status: {
           name: data.status || "Inbox",
         },
@@ -169,7 +178,7 @@ export const createPage = async (data: {
 
     // Add optional fields
     if (data.date) {
-      properties.Date = {
+      properties["日期 (Date)"] = {
         date: {
           start: data.date,
         },
@@ -177,7 +186,7 @@ export const createPage = async (data: {
     }
 
     if (data.area) {
-      properties.Area = {
+      properties["區域 (Area)"] = {
         select: {
           name: data.area,
         },
@@ -199,13 +208,13 @@ export const createPage = async (data: {
     }
 
     if (data.categories && data.categories.length > 0) {
-      properties.Category = {
+      properties["類別 (Type)"] = {
         multi_select: data.categories.map((cat) => ({ name: cat })),
       };
     }
 
     if (data.summary) {
-      properties["AI Summary"] = {
+      properties["AI 摘要"] = {
         rich_text: [
           {
             text: {
@@ -217,7 +226,7 @@ export const createPage = async (data: {
     }
 
     if (data.mapsUrl) {
-      properties["Maps URL"] = {
+      properties["Google Maps"] = {
         url: data.mapsUrl,
       };
     }
@@ -263,7 +272,7 @@ export const updatePage = async (
     }
 
     if (updates.title) {
-      properties.Name = {
+      properties["地點名稱"] = {
         title: [
           {
             text: {
@@ -275,7 +284,7 @@ export const updatePage = async (
     }
 
     if (updates.area) {
-      properties.Area = {
+      properties["區域 (Area)"] = {
         select: {
           name: updates.area,
         },
@@ -283,7 +292,7 @@ export const updatePage = async (
     }
 
     if (updates.summary) {
-      properties["AI Summary"] = {
+      properties["AI 摘要"] = {
         rich_text: [
           {
             text: {
@@ -295,19 +304,19 @@ export const updatePage = async (
     }
 
     if (updates.mapsUrl) {
-      properties["Maps URL"] = {
+      properties["Google Maps"] = {
         url: updates.mapsUrl,
       };
     }
 
     if (updates.categories && updates.categories.length > 0) {
-      properties.Category = {
+      properties["類別 (Type)"] = {
         multi_select: updates.categories.map((cat) => ({ name: cat })),
       };
     }
 
     if (updates.status) {
-      properties.Status = {
+      properties["處理狀態"] = {
         status: {
           name: updates.status,
         },

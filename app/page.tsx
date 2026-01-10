@@ -41,11 +41,31 @@ const staggerContainer: Variants = {
   visible: { transition: { staggerChildren: 0.1 } }
 };
 
+import useSWR from 'swr';
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
 export default function App() {
+  // SWR for smart polling and caching
+  const { data: serverItems, error, mutate } = useSWR<ExtendedItineraryItem[]>('/api/inbox', fetcher, {
+    refreshInterval: 10000, // Poll every 10 seconds
+    revalidateOnFocus: true,
+  });
+
+  // Local state for optimistic UI updates (synced with SWR data)
   const [items, setItems] = useState<ExtendedItineraryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Sync SWR data to local state
+  useEffect(() => {
+     if (serverItems) {
+         setItems(serverItems);
+         setIsLoading(false);
+     }
+  }, [serverItems]);
+
   const [editingItem, setEditingItem] = useState<ExtendedItineraryItem | null>(null);
   const [viewMode, setViewMode] = useState<'timeline' | 'inbox'>('timeline'); 
-  const [isLoading, setIsLoading] = useState(true);
 
   // Toast State
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -60,26 +80,8 @@ export default function App() {
      setToasts(prev => prev.filter(t => t.id !== id));
   };
 
-  // Fetch Data
-  const fetchItems = async () => {
-    try {
-      const res = await fetch('/api/inbox');
-      if (!res.ok) throw new Error("Failed to fetch");
-      const data = await res.json();
-      setItems(data);
-      setIsLoading(false);
-    } catch (error) {
-      console.error("Fetch error:", error);
-      // addToast("無法載入資料", 'error'); 
-    }
-  };
-
-  // Initial Fetch & Polling
-  useEffect(() => {
-    fetchItems();
-    const interval = setInterval(fetchItems, 5000); // Poll every 5s
-    return () => clearInterval(interval);
-  }, []);
+  // Helper to trigger revalidate
+  const fetchItems = () => mutate();
 
   // Current time state
   const [now, setNow] = useState(new Date());
@@ -94,19 +96,34 @@ export default function App() {
   const [selectedDate, setSelectedDate] = useState(() => {
     try {
       const now = new Date();
-      const today = [
-        now.getFullYear(),
-        String(now.getMonth() + 1).padStart(2, '0'),
-        String(now.getDate()).padStart(2, '0')
-      ].join('-');
-      
-      return today; // Always use today's date as default
+      return now.toISOString().split('T')[0];
     } catch (e) {
-      console.error('Date initialization error:', e);
-      const now = new Date();
-      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      return "2024-01-01";
     }
   });
+
+  // Auto-switch date if current one becomes empty, OR if new date added
+  useEffect(() => {
+      // Get all valid dates
+      const scheduledDates = Array.from(new Set(items
+        .filter(i => i.status !== 'Inbox' && i.date)
+        .map(i => i.date)
+      )).sort();
+
+      if (scheduledDates.length === 0) return;
+
+      // If current selected date has no items, switch to the first available date
+      // Or maybe switch to the one closest to today? For now, first available which is usually earliest.
+      // But wait: if I just ADDED an item to a new date, I want to jump to it?
+      // Complicated to detect "Action". 
+      // Simple rule: If selectedDate is NOT in valid list, jump to first.
+      if (!scheduledDates.includes(selectedDate)) {
+          // If we have dates, jump to the first one
+          if (scheduledDates.length > 0) {
+             setSelectedDate(scheduledDates[0]);
+          }
+      }
+  }, [items, selectedDate]);
 
   // Skeleton Loading Logic (Only on initial load or date switch if needed, but here generic)
   /* 
@@ -201,9 +218,16 @@ export default function App() {
       }
   };
 
+
+
   const handleUpdateItem = async (data: any) => {
       setEditingItem(null);
       setIsQuickCaptureOpen(false);
+
+      // FORCE SWITCH to the target date so user sees the new item
+      if (data.date) {
+          setSelectedDate(data.date);
+      }
 
       const type = data.selectedType || "activity";
       let finalTitle = data.title;
@@ -213,7 +237,7 @@ export default function App() {
       if (type === 'transport') {
         const mode = data.transportMode || "交通工具";
         if (!data.id) {
-             finalTitle = `前往 ${data.title}`; // Only add prefix for new items
+             finalTitle = `前往 ${data.title}`; 
         } else {
              finalTitle = data.title;
         }
@@ -232,7 +256,6 @@ export default function App() {
       }
 
       let summaryText = data.memo || "";
-      // Construct summary if empty
       if (!summaryText) {
          if (type === 'transport') summaryText = `預計搭乘 ${data.transportMode} 前往 ${data.title}`;
          else if (type === 'stay') summaryText = "住宿行程";
@@ -251,29 +274,34 @@ export default function App() {
         date: data.date,
         summary: summaryText,
         cost: data.cost,
-        categories: [getTypeLabel(type)], // Simple category mapping
-        // Logic to pass transport/accommodation details? 
-        // Notion schema doesn't have detailed transport struct, so we might lose it or stuff it in summary.
-        // For now, let's keep it simple as per schema.
+        categories: [getTypeLabel(type)], 
       };
 
       try {
         if (data.id) {
+           // Optimistic Update for Edit
+           setItems(prev => prev.map(i => i.id === data.id ? { ...i, ...payload } : i));
+           
            await fetch(`/api/inbox/${data.id}`, {
                method: 'PATCH',
                body: JSON.stringify(payload)
            });
            addToast("行程已更新", 'success');
         } else {
+           // Optimistic Add (Temporary ID)
+           const tempId = "temp_" + Date.now();
+           setItems(prev => [...prev, { id: tempId, ...payload, type: type as any, activeDates: [] } as any]);
+
            await fetch('/api/inbox', {
                method: 'POST',
                body: JSON.stringify(payload)
            });
            addToast("已新增行程", 'success');
         }
-        fetchItems();
+        fetchItems(); // Sync final ID
       } catch (e) {
         addToast("儲存失敗", "error");
+        fetchItems(); // Revert
       }
   };
 
@@ -336,33 +364,66 @@ export default function App() {
                 exit={{ height: 0, opacity: 0 }}
                 className="flex items-center gap-2 px-5 pb-4 overflow-x-auto no-scrollbar"
             >
-            {DATES.map((date, index) => {
-                const isActive = date.full === selectedDate;
-                const prevDate = DATES[index - 1];
-                const isNewMonth = !prevDate || date.month !== prevDate.month;
+            {(() => {
+                // Computed Dates from Items
+                const scheduledItems = items.filter(i => i.status !== 'Inbox' && i.date);
+                const uniqueDates = Array.from(new Set(scheduledItems.map(i => i.date))).sort();
+                
+                // If clean slate (no items), maybe show today? Or just empty state?
+                // Let's show Today if list is empty, or include Today if it has no items but we want a default?
+                // User said: "If no schedule, it vanishes". So if completely empty, show nothing?
+                // But we need to allow adding. We'll rely on Quick Capture for adding active dates.
+                
+                // Helper to format date
+                const formatDate = (dateStr: string) => {
+                    const date = new Date(dateStr);
+                    const month = date.getMonth() + 1;
+                    const day = date.getDate();
+                    const dayOfWeek = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'][date.getDay()];
+                    return { full: dateStr, month: `${month}月`, day: dayOfWeek, label: String(day).padStart(2, '0') };
+                };
 
-                return (
-                <React.Fragment key={date.full}>
-                    {isNewMonth && (
-                    <div className="flex flex-col justify-center items-center h-14 min-w-[32px] pl-1 pr-3 border-r border-transparent">
-                        <span className="text-xs font-bold text-zinc-500 writing-vertical-rl">{date.month}</span>
-                    </div>
-                    )}
-                    
-                    <button
-                    onClick={() => setSelectedDate(date.full)}
-                    className={`flex flex-col items-center justify-center min-w-[50px] h-14 rounded-sm border transition-all ${
-                        isActive 
-                        ? "bg-white border-white text-black shadow-[0_0_15px_rgba(255,255,255,0.3)]" 
-                        : "bg-zinc-900 border-zinc-800 text-zinc-500 hover:border-zinc-700"
-                    }`}
-                    >
-                    <span className="text-[10px] uppercase font-bold tracking-wide">{date.day}</span>
-                    <span className="text-lg font-bold leading-none">{date.label}</span>
-                    </button>
-                </React.Fragment>
-                );
-            })}
+                const displayDates = uniqueDates.map(formatDate);
+
+                if (displayDates.length === 0) {
+                   return (
+                       <div className="w-full text-center py-2 text-zinc-600 text-xs font-mono border border-zinc-900 border-dashed rounded bg-zinc-900/10">
+                           尚無已排程日期 -&gt; 點擊 + 新增
+                       </div>
+                   );
+                }
+
+                return displayDates.map((date, index) => {
+                    const isActive = date.full === selectedDate;
+                    const prevDate = displayDates[index - 1];
+                    const isNewMonth = !prevDate || date.month !== prevDate.month; // Simple check
+
+                    return (
+                    <React.Fragment key={date.full}>
+                        {isNewMonth && (
+                        <div className="flex flex-col justify-center items-center h-14 min-w-[32px] pl-1 pr-3 border-r border-transparent">
+                            <span className="text-xs font-bold text-zinc-500 writing-vertical-rl">{date.month}</span>
+                        </div>
+                        )}
+                        
+                        <button
+                        onClick={() => setSelectedDate(date.full)}
+                        className={`relative flex flex-col items-center justify-center min-w-[50px] h-14 rounded-sm border transition-all ${
+                            isActive 
+                            ? "bg-white border-white text-black shadow-[0_0_15px_rgba(255,255,255,0.3)]" 
+                            : "bg-zinc-900 border-zinc-800 text-zinc-500 hover:border-zinc-700"
+                        }`}
+                        >
+                        <span className="text-[10px] uppercase font-bold tracking-wide">{date.day}</span>
+                        <span className="text-lg font-bold leading-none">{date.label}</span>
+                        
+                        {/* Dot is redundant if we only show active days, but kept for style consistency or if we relax the rule later */}
+                        <span className={`absolute bottom-1 w-1 h-1 rounded-full ${isActive ? 'bg-black' : 'bg-indigo-500'}`} />
+                        </button>
+                    </React.Fragment>
+                    );
+                });
+            })()}
             </motion.div>
         )}
       </header>

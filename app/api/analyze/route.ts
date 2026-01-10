@@ -1,5 +1,5 @@
 import { getPageById, updatePage } from "@/lib/notion";
-import { scrapeUrl } from "@/lib/scraper";
+// import { scrapeUrl } from "@/lib/scraper";
 import { analyzeContent } from "@/lib/gemini";
 import { NextResponse } from "next/server";
 
@@ -66,31 +66,33 @@ export async function POST(request: Request) {
     await updatePage(pageId, { aiProcessing: "Processing" });
 
     // ========================================
-    // STEP 3: EXECUTE (Scraping + AI)
+    // STEP 3: EXECUTE (Direct AI Analysis)
     // ========================================
-    console.log(`[Analyze] Step 3: Executing analysis for ${url}`);
+    console.log(`[Analyze] Step 3: Analyzing ${url} with Gemini directly`);
 
-    // 3.1 Scraping
-    console.log(`[Analyze] 3.1: Scraping URL...`);
-    const scrapedData = await scrapeUrl(url);
-
-    // 3.2 AI Analysis
-    console.log(`[Analyze] 3.2: Analyzing with Gemini...`);
-    const analyzedData = await analyzeContent(scrapedData);
+    // 3.1 AI Analysis (Directly with URL and Memo)
+    // We pass the URL and any available context (though currently we only have the URL from the page property)
+    // If we wanted to pass the 'memo' or context, we'd need to fetch it from the page or pass it in the body.
+    // For now, we rely on the URL.
+    const analyzedData = await analyzeContent(url);
 
     // ========================================
     // STEP 4: UPDATE (Write back + Unlock)
     // ========================================
     console.log(`[Analyze] Step 4: Updating page with results`);
 
-    await updatePage(pageId, {
-      title: analyzedData.title,
-      area: analyzedData.area,
-      categories: analyzedData.category,
-      summary: analyzedData.summary,
-      mapsUrl: analyzedData.mapsUrl,
+    // Ensure we don't overwrite if Gemini returns empty
+    const updates: any = {
       aiProcessing: "Done",
-    });
+    };
+
+    if (analyzedData.title) updates.title = analyzedData.title;
+    if (analyzedData.area) updates.area = analyzedData.area;
+    if (analyzedData.category && analyzedData.category.length > 0) updates.categories = analyzedData.category;
+    if (analyzedData.summary) updates.summary = analyzedData.summary;
+    if (analyzedData.mapsUrl) updates.mapsUrl = analyzedData.mapsUrl;
+
+    await updatePage(pageId, updates);
 
     console.log(`[Analyze] ✅ Success for page ${pageId}`);
 
@@ -147,7 +149,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       pageId,
       aiStatus: aiStatus || "Unknown",
-      title: page.properties.Name.title[0]?.plain_text || "",
+      title: page.properties["地點名稱"].title[0]?.plain_text || "",
     });
   } catch (error: any) {
     return NextResponse.json(

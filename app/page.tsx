@@ -20,25 +20,25 @@ import { ItineraryCard } from "@/components/ItineraryCard";
 
 // Skeleton Component
 const SkeletonItem = () => (
-    <div className="relative flex items-center gap-4 animate-pulse opacity-60">
+    <div className="flex items-center gap-4 py-2">
         <div className="w-12 flex flex-col items-end gap-1">
-            <div className="h-3 w-8 bg-zinc-800 rounded" />
+            <div className="h-3 w-8 bg-zinc-900 rounded skeleton-shimmer" />
         </div>
         <div className="relative z-10 flex-shrink-0">
-            <div className="w-14 h-14 bg-zinc-800 rounded-sm" />
+            <div className="w-14 h-14 bg-zinc-900 rounded-sm skeleton-shimmer" />
         </div>
-        <div className="flex-1 border-b border-zinc-800/50 pb-6 pt-1">
-             <div className="h-4 w-3/4 bg-zinc-800 rounded mb-2" />
+        <div className="flex-1 border-b border-zinc-900 pb-6 pt-1">
+             <div className="h-5 w-3/4 bg-zinc-900 rounded mb-2 skeleton-shimmer" />
              <div className="flex gap-2">
-                 <div className="h-3 w-10 bg-zinc-800 rounded" />
-                 <div className="h-3 w-16 bg-zinc-800 rounded" />
+                 <div className="h-3 w-16 bg-zinc-900 rounded skeleton-shimmer" />
              </div>
         </div>
     </div>
 );
 
 const staggerContainer: Variants = {
-  visible: { transition: { staggerChildren: 0.1 } }
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
 };
 
 import useSWR from 'swr';
@@ -432,9 +432,13 @@ export default function App() {
       <main className="p-5 space-y-8 min-h-[60vh]">
         
         {isLoading ? (
-            <div className="space-y-6 animate-pulse">
-                <div className="w-full aspect-[4/3] bg-zinc-900 rounded-sm" />
-                <div className="space-y-6 pl-4">
+            <div className="space-y-6">
+                {/* Hero Skeleton */}
+                <div className="w-full aspect-[4/3] bg-zinc-900 rounded-sm skeleton-shimmer" />
+                
+                {/* List Skeleton */}
+                <div className="space-y-6 pl-4 pt-4">
+                    <SkeletonItem />
                     <SkeletonItem />
                     <SkeletonItem />
                     <SkeletonItem />

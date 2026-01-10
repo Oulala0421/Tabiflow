@@ -33,11 +33,20 @@ export async function POST(req: NextRequest) {
         );
     }
 
+    const { url, title, status, date, time, area, categories, summary, mapsUrl, cost } = body;
+
     const id = await createPage({
         title: title || url,
         url: url,
         status: status || "Inbox",
-        aiProcessing: "Pending"
+        aiProcessing: "Pending",
+        date,
+        time,
+        area,
+        categories,
+        summary,
+        mapsUrl,
+        cost
     });
 
     console.log(`[API /inbox POST] Created page with ID: ${id}`);

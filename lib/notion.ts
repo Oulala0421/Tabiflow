@@ -152,12 +152,14 @@ export const createPage = async (data: {
   title: string;
   url?: string;
   date?: string;
+  time?: string; // Added time
   area?: string;
   status?: string;
   aiProcessing?: AIProcessingStatus;
   categories?: string[];
   summary?: string;
   mapsUrl?: string;
+  cost?: number; // Added cost
 }): Promise<string> => {
   if (!DATABASE_ID) {
     throw new Error("NOTION_DATABASE_ID is not defined");
@@ -183,10 +185,21 @@ export const createPage = async (data: {
 
     // Add optional fields
     if (data.date) {
+      let startInfo: string = data.date;
+      if (data.time && data.time !== "TBD" && data.time !== "待定") {
+        startInfo = `${data.date}T${data.time}:00`;
+      }
+      
       properties["日期 (Date)"] = {
         date: {
-          start: data.date,
+          start: startInfo,
         },
+      };
+    }
+
+    if (data.cost) {
+      properties["預算 (Cost)"] = {
+        number: data.cost,
       };
     }
 

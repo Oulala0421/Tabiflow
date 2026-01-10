@@ -160,8 +160,27 @@ export const getItinerary = async (): Promise<ItineraryItem[]> => {
       // Extract Summary & Extended Details
       const summary = props["AI摘要"]?.rich_text?.[0]?.plain_text || "";
 
-      // Parse Transport & Accommodation from Summary if available
-      let { transport, accommodation } = parseSummaryToDetails(summary);
+      // [Schema Migration] Read from JSON fields first
+      const transportJsonStr = props["TransportJSON"]?.rich_text?.[0]?.plain_text;
+      const accommodationJsonStr = props["AccommodationJSON"]?.rich_text?.[0]?.plain_text;
+      
+      let transport: any = undefined;
+      let accommodation: any = undefined;
+
+      // Try parsing JSON
+      try {
+          if (transportJsonStr) transport = JSON.parse(transportJsonStr);
+          if (accommodationJsonStr) accommodation = JSON.parse(accommodationJsonStr);
+      } catch (e) {
+          console.error("Failed to parse JSON fields for page:", typedPage.id, e);
+      }
+
+      // Fallback: If no JSON data found (Legacy Data), parse from Summary
+      if (!transport && !accommodation) {
+           const legacyData = parseSummaryToDetails(summary);
+           if (!transport) transport = legacyData.transport;
+           if (!accommodation) accommodation = legacyData.accommodation;
+      }
 
       // [Synthesis] Ensure transport object exists if type is transport
       if (type === 'transport' && !transport) {
@@ -293,6 +312,18 @@ export const createPage = async (data: {
             }
         ]
       };
+    }
+
+    // [Schema Migration] Write JSON fields
+    if (data.transport) {
+        properties["TransportJSON"] = {
+            rich_text: [{ text: { content: JSON.stringify(data.transport) } }]
+        };
+    }
+    if (data.accommodation) {
+        properties["AccommodationJSON"] = {
+            rich_text: [{ text: { content: JSON.stringify(data.accommodation) } }]
+        };
     }
 
     if (data.area) {
@@ -473,6 +504,18 @@ export const updatePage = async (
             }
         ]
       };
+    }
+
+    // [Schema Migration] Write JSON fields
+    if (updates.transport) {
+        properties["TransportJSON"] = {
+            rich_text: [{ text: { content: JSON.stringify(updates.transport) } }]
+        };
+    }
+    if (updates.accommodation) {
+        properties["AccommodationJSON"] = {
+            rich_text: [{ text: { content: JSON.stringify(updates.accommodation) } }]
+        };
     }
 
     await notion.pages.update({

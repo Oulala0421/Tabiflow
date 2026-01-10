@@ -33,11 +33,21 @@ export async function POST(req: NextRequest) {
 
     const { 
         url, title, status, date, time, area, categories, summary, mapsUrl, cost, 
-        transportMode, accommodation 
+        transportMode, accommodation, transport: transportBody 
     } = body;
 
-    // Construct Transport object if mode exists
-    const transport = transportMode ? { mode: transportMode, from: area } : undefined;
+    // Construct Transport object
+    // Priority: Body.transport > Constructed from flat fields
+    let transport = transportBody;
+    if (!transport && transportMode) {
+        transport = { 
+            mode: transportMode, 
+            from: area,
+            // Capture potential extra fields if flat-mapped in future
+            // platform: body.platform, 
+            // car: body.car 
+        };
+    }
 
     const id = await createPage({
         title: title || url,

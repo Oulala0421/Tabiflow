@@ -1,5 +1,5 @@
 import { getPageById, updatePage } from "@/lib/notion";
-// import { scrapeUrl } from "@/lib/scraper";
+import { scrapeUrl } from "@/lib/scraper";
 import { analyzeContent } from "@/lib/gemini";
 import { NextResponse } from "next/server";
 
@@ -70,11 +70,18 @@ export async function POST(request: Request) {
     // ========================================
     console.log(`[Analyze] Step 3: Analyzing ${url} with Gemini directly`);
 
-    // 3.1 AI Analysis (Directly with URL and Memo)
-    // We pass the URL and any available context (though currently we only have the URL from the page property)
-    // If we wanted to pass the 'memo' or context, we'd need to fetch it from the page or pass it in the body.
-    // For now, we rely on the URL.
-    const analyzedData = await analyzeContent(url);
+    // 3.1 Scrape URL Content (New)
+    let scrapedContext = "";
+    try {
+        console.log(`[Analyze] Scraping ${url}...`);
+        scrapedContext = await scrapeUrl(url);
+        console.log(`[Analyze] Scraped ${scrapedContext.length} chars`);
+    } catch (e) {
+        console.error(`[Analyze] Scraping failed, proceeding with URL only:`, e);
+    }
+
+    // 3.2 AI Analysis (Directly with URL and Context)
+    const analyzedData = await analyzeContent(url, scrapedContext);
 
     // ========================================
     // STEP 4: UPDATE (Write back + Unlock)

@@ -11,7 +11,7 @@ export interface AnalysisResult {
   mapsUrl: string | null;
 }
 
-export const analyzeContent = async (url: string): Promise<AnalysisResult> => {
+export const analyzeContent = async (url: string, context?: string): Promise<AnalysisResult> => {
   if (!apiKey) {
     console.warn("GEMINI_API_KEY is not defined, returning fallback.");
     return fallbackResult(url);
@@ -26,10 +26,11 @@ export const analyzeContent = async (url: string): Promise<AnalysisResult> => {
     });
 
     const prompt = `
-    You are a travel assistant. I will provide a URL.
-    Please infer the travel details based on the structure of the URL or your knowledge base.
+    You are a travel assistant. I will provide a URL${context ? " and its scraped content" : ""}.
+    Please infer the travel details based on the provided information.
     
     URL: ${url}
+    ${context ? `\n\nPage Content:\n${context.substring(0, 10000)}...` : ""}
 
     Task:
     1. Identify the specific place (Restaurant, Hotel, Attraction, etc).
@@ -50,7 +51,10 @@ export const analyzeContent = async (url: string): Promise<AnalysisResult> => {
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const jsonText = response.text();
-    const data = JSON.parse(jsonText);
+    
+    // Fix: Remove Markdown code blocks if present
+    const cleanJson = jsonText.replace(/```json|```/g, "").trim();
+    const data = JSON.parse(cleanJson);
 
     return {
       title: data.title || "Unknown Title",

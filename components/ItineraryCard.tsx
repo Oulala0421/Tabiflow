@@ -1,6 +1,6 @@
 import React from "react";
 import { motion, Variants } from "framer-motion";
-import { Coffee, CheckCircle2, Navigation } from "lucide-react";
+import { Coffee, CheckCircle2, Navigation, TrainFront, BedDouble, ArrowRight, Soup } from "lucide-react";
 import { ExtendedItineraryItem } from "@/types/notion";
 import { getTypeLabel, getStatusColor, parseMinutes } from "@/lib/utils";
 
@@ -94,6 +94,52 @@ export const ItineraryCard = ({ item, prevItem, onClick }: ItineraryCardProps) =
                         <span className="text-[10px] font-mono text-zinc-600 mt-1">¥{item.cost.toLocaleString()}</span>
                     )}
                 </div>
+
+                {/* Rich Details Logic */}
+                {item.type === 'transport' && item.transport && (
+                     <div className="my-2 p-2 bg-zinc-900/50 rounded border border-zinc-800/50 flex items-center gap-3">
+                        <div className="w-6 h-6 rounded flex items-center justify-center bg-indigo-500/10 text-indigo-400 shrink-0">
+                             <TrainFront size={12} />
+                        </div>
+                        <div className="flex-1 min-w-0 flex items-center gap-2 text-xs text-zinc-400">
+                             <span className="truncate max-w-[80px]">{item.transport.from}</span>
+                             <ArrowRight size={10} className="text-zinc-600" />
+                             <span className="truncate flex-1 text-zinc-300">{item.transport.to || item.title}</span>
+                        </div>
+                        {item.transport.mode && (
+                            <span className="text-[9px] font-mono px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-500 whitespace-nowrap hidden sm:inline-block">
+                                {item.transport.mode}
+                            </span>
+                        )}
+                     </div>
+                )}
+
+                {item.type === 'stay' && item.accommodation && (
+                    <div className="my-2 p-2 bg-zinc-900/50 rounded border border-zinc-800/50 flex items-center gap-4">
+                        <div className="w-6 h-6 rounded flex items-center justify-center bg-purple-500/10 text-purple-400 shrink-0">
+                             <BedDouble size={12} />
+                        </div>
+                        <div className="flex items-center gap-3 text-xs">
+                             <div className="flex flex-col">
+                                 <span className="text-[9px] text-zinc-600 uppercase">Check-in</span>
+                                 <span className="text-zinc-300 font-mono">{item.accommodation.checkIn}</span>
+                             </div>
+                             <div className="w-[1px] h-4 bg-zinc-800" />
+                             <div className="flex items-center gap-2">
+                                 {item.accommodation.isBreakfastIncluded && (
+                                     <Coffee size={12} className="text-orange-400" title="含早餐" />
+                                 )}
+                                 {item.accommodation.isDinnerIncluded && (
+                                     <Soup size={12} className="text-pink-400" title="含晚餐" />
+                                 )}
+                                 {!item.accommodation.isBreakfastIncluded && !item.accommodation.isDinnerIncluded && (
+                                     <span className="text-zinc-600">無餐點</span>
+                                 )}
+                             </div>
+                        </div>
+                    </div>
+                )}
+
                 <div className="flex items-center gap-2 mt-1">
                 <span className="text-[10px] font-mono text-zinc-500 uppercase px-1.5 py-0.5 bg-zinc-900 rounded border border-zinc-800">
                     {getTypeLabel(item.type)}

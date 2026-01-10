@@ -1,5 +1,13 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false, // For PWA feeling
+  themeColor: "black", // Moved here if applicable, or keep in metadata if it's not viewport related (Actually theme-color is viewport in Next 14+)
+};
 
 export const metadata: Metadata = {
   title: "Tabiflow",
@@ -9,12 +17,6 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "Tabiflow",
-  },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false, // For PWA feeling
   },
 };
 

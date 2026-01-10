@@ -33,3 +33,7 @@ dist-ssr
 
 # Ignore invalid nul file
 nul
+
+# Antigravity Agent Configuration
+.agent/
+AGENTS.md

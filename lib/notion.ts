@@ -268,7 +268,7 @@ export const createPage = async (data: {
         startInfo = `${data.date}T${data.time}:00`;
       }
       
-      properties["日期 (Date)"] = {
+      properties["日期"] = {
         date: {
           start: startInfo,
         },
@@ -276,13 +276,13 @@ export const createPage = async (data: {
     }
 
     if (data.cost) {
-      properties["預算 (Cost)"] = {
+      properties["預算"] = {
         number: data.cost,
       };
     }
 
     if (data.area) {
-      properties["區域 (Area)"] = {
+      properties["區域"] = {
         select: {
           name: data.area,
         },
@@ -304,7 +304,7 @@ export const createPage = async (data: {
     }
 
     if (data.categories && data.categories.length > 0) {
-      properties["類別 (Type)"] = {
+      properties["類別"] = {
         multi_select: data.categories.map((cat) => ({ name: cat })),
       };
     }
@@ -312,7 +312,7 @@ export const createPage = async (data: {
     if (data.summary || data.transport || data.accommodation) {
       const fullSummary = formatDetailsToSummary(data.summary, data.transport, data.accommodation);
       
-      properties["AI 摘要"] = {
+      properties["AI摘要"] = {
         rich_text: [
           {
             text: {

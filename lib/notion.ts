@@ -132,8 +132,7 @@ export const getItinerary = async (): Promise<ItineraryItem[]> => {
         coverImage,
         lastEdited: typedPage.last_edited_time,
         url,
-        lastEdited: typedPage.last_edited_time,
-        url,
+
         aiProcessing,
         cost,
       };

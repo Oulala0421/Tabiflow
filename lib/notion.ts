@@ -43,6 +43,47 @@ const formatDetailsToSummary = (
   return text;
 };
 
+// Helper: Parse Summary string back to Transport/Accommodation objects (Best Effort)
+const parseSummaryToDetails = (summary: string) => {
+    let transport: any = undefined;
+    let accommodation: any = undefined;
+
+    if (!summary) return { transport, accommodation };
+
+    // Parse Transport
+    if (summary.includes("🚆")) {
+        const transportLine = summary.split('\n').find(l => l.includes("🚆"));
+        if (transportLine) {
+            const parts = transportLine.replace("🚆 ", "").split(" | ");
+            transport = {};
+            parts.forEach(p => {
+                const [key, val] = p.split(": ");
+                if (key === "交通方式") transport.mode = val;
+                if (key === "出發地") transport.from = val;
+            });
+            // Defaults that might be lost, but 'from' and 'mode' are key
+        }
+    }
+
+    // Parse Accommodation
+    if (summary.includes("🏨")) {
+        const stayLine = summary.split('\n').find(l => l.includes("🏨"));
+        if (stayLine) {
+            const parts = stayLine.replace("🏨 ", "").split(" | ");
+            accommodation = { facilities: [] };
+            parts.forEach(p => {
+                if (p.startsWith("In: ")) accommodation.checkIn = p.replace("In: ", "");
+                if (p.startsWith("Out: ")) accommodation.checkOut = p.replace("Out: ", "");
+                if (p === "含早餐") accommodation.isBreakfastIncluded = true;
+                if (p === "含晚餐") accommodation.isDinnerIncluded = true;
+                if (p.startsWith("設施: ")) accommodation.facilities = p.replace("設施: ", "").split(", ");
+            });
+        }
+    }
+
+    return { transport, accommodation };
+};
+
 // Initialize Notion Client
 const notion = new Client({
   auth: NOTION_API_KEY,

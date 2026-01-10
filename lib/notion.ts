@@ -258,6 +258,7 @@ export const updatePage = async (
     mapsUrl?: string;
     categories?: string[];
     status?: string;
+    date?: string; // ISO string 2026-01-10
   }
 ): Promise<void> => {
   try {
@@ -319,6 +320,14 @@ export const updatePage = async (
       properties["處理狀態"] = {
         status: {
           name: updates.status,
+        },
+      };
+    }
+
+    if (updates.date) {
+      properties["日期 (Date)"] = {
+        date: {
+          start: updates.date,
         },
       };
     }

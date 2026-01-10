@@ -41,6 +41,10 @@ export const QuickCapture = ({
   const [advancedMapUrl, setAdvancedMapUrl] = useState("");
   const [advancedWebUrl, setAdvancedWebUrl] = useState("");
   const [advancedMemo, setAdvancedMemo] = useState("");
+  
+  // Transport Fields
+  const [platform, setPlatform] = useState("");
+  const [car, setCar] = useState("");
 
   // Accommodation Fields
   const [checkIn, setCheckIn] = useState("15:00");
@@ -65,6 +69,8 @@ export const QuickCapture = ({
         if (initialData.type === 'transport' && initialData.transport) {
             setTransportMode(initialData.transport.mode || "");
             setArea(initialData.transport.from || "");
+            setPlatform(initialData.transport.platform || "");
+            setCar(initialData.transport.car || "");
         }
 
         // Handle Accommodation
@@ -159,6 +165,8 @@ export const QuickCapture = ({
 
         if (selectedType === 'transport') {
              payload.transportMode = transportMode;
+             payload.transportPlatform = platform;
+             payload.transportCar = car;
         }
 
         if (selectedType === 'stay') {
@@ -251,17 +259,20 @@ export const QuickCapture = ({
                 <Type size={16} />
                 手動輸入
             </button>
-            <button 
-                onClick={() => setActiveTab('ai')}
-                className={`pb-3 px-6 text-sm font-bold uppercase tracking-wider border-b-2 transition-all gap-2 flex items-center ${
-                activeTab === 'ai' 
-                    ? 'text-indigo-400 border-indigo-400' 
-                    : 'text-zinc-600 border-transparent hover:text-zinc-400'
-                }`}
-            >
-                <Sparkles size={16} />
-                AI 連結
-            </button>
+            <div className="relative group">
+                <button 
+                    disabled
+                    className="pb-3 px-6 text-sm font-bold uppercase tracking-wider border-b-2 border-transparent text-zinc-700 cursor-not-allowed gap-2 flex items-center relative"
+                >
+                    <Sparkles size={16} />
+                    AI 連結
+                </button>
+                <div className="absolute inset-0 flex items-center justify-center bg-zinc-950/80 backdrop-blur-[1px] rounded-sm border border-zinc-800/50">
+                     <span className="text-[10px] font-bold text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded-full border border-yellow-500/20">
+                        功能維護中
+                     </span>
+                </div>
+            </div>
             </div>
         )}
 

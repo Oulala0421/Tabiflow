@@ -263,8 +263,8 @@ export default function App() {
            mode: mode,
            from: data.area || "出發地",
            to: data.title,
-           platform: "-",
-           car: "-",
+           platform: data.transportPlatform || "-",
+           car: data.transportCar || "-",
            seat: "自由座",
            duration: "-" 
         };

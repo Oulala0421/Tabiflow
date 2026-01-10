@@ -111,6 +111,16 @@ export const ItineraryCard = ({ item, prevItem, onClick }: ItineraryCardProps) =
                                 {item.transport.mode}
                             </span>
                         )}
+                        {(item.transport.platform && item.transport.platform !== '-') && (
+                            <span className="text-[9px] font-mono px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-300 border border-zinc-700 whitespace-nowrap">
+                                月台 {item.transport.platform}
+                            </span>
+                        )}
+                         {(item.transport.car && item.transport.car !== '-') && (
+                            <span className="text-[9px] font-mono px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-300 border border-zinc-700 whitespace-nowrap">
+                                {item.transport.car} 號車
+                            </span>
+                        )}
                      </div>
                 )}
 

@@ -25,6 +25,8 @@ const formatDetailsToSummary = (
     const parts = [];
     if (transport.mode) parts.push(`交通方式: ${transport.mode}`);
     if (transport.from) parts.push(`出發地: ${transport.from}`);
+    if (transport.platform && transport.platform !== '-') parts.push(`月台: ${transport.platform}`);
+    if (transport.car && transport.car !== '-') parts.push(`車廂: ${transport.car}`);
     if (parts.length > 0) text += (text ? "\n\n" : "") + "🚆 " + parts.join(" | ");
   }
 
@@ -60,6 +62,8 @@ const parseSummaryToDetails = (summary: string) => {
                 const [key, val] = p.split(": ");
                 if (key === "交通方式") transport.mode = val;
                 if (key === "出發地") transport.from = val;
+                if (key === "月台") transport.platform = val;
+                if (key === "車廂") transport.car = val;
             });
             // Defaults that might be lost, but 'from' and 'mode' are key
         }
@@ -94,10 +98,10 @@ const notion = new Client({
  */
 const mapCategoryToType = (categories: string[]): ItineraryType => {
   const lowerCats = categories.map((c) => c.toLowerCase());
-  if (lowerCats.some((c) => c.includes("food") || c.includes("cafe") || c.includes("dinner"))) return "food";
-  if (lowerCats.some((c) => c.includes("train") || c.includes("bus") || c.includes("transit"))) return "transport";
-  if (lowerCats.some((c) => c.includes("shop") || c.includes("mall"))) return "shop";
-  if (lowerCats.some((c) => c.includes("hotel") || c.includes("stay") || c.includes("accommodation"))) return "stay";
+  if (lowerCats.some((c) => c.includes("food") || c.includes("cafe") || c.includes("dinner") || c.includes("美食"))) return "food";
+  if (lowerCats.some((c) => c.includes("train") || c.includes("bus") || c.includes("transit") || c.includes("交通"))) return "transport";
+  if (lowerCats.some((c) => c.includes("shop") || c.includes("mall") || c.includes("購物"))) return "shop";
+  if (lowerCats.some((c) => c.includes("hotel") || c.includes("stay") || c.includes("accommodation") || c.includes("住宿"))) return "stay";
   return "activity"; // Default
 };
 

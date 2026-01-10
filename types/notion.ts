@@ -58,7 +58,7 @@ export interface NotionPage {
     "AI摘要": { rich_text: { plain_text: string }[] };
     "URL": { url: string | null }; // Original URL for AI processing
     "AI Processing": { select: { name: string } | null }; // Processing state: Pending/Processing/Done/Error
-    "預算": { select: { name: string } | null };
+    "預算": { rich_text: { plain_text: string }[] | null };
   };
   cover: { type: "external" | "file"; external?: { url: string }; file?: { url: string } } | null;
   last_edited_time: string;

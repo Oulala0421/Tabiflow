@@ -160,9 +160,10 @@ export const getItinerary = async (): Promise<ItineraryItem[]> => {
       // Extract AI Processing Status
       const aiProcessing = props["AI Processing"]?.select?.name || undefined;
 
-      // Extract Cost (Select -> Number)
-      const costRaw = props["預算"]?.select?.name || "0";
-      const cost = parseInt(costRaw, 10) || 0;
+      // Extract Cost (Text -> Number)
+      const costRaw = props["預算"]?.rich_text?.[0]?.plain_text || "0";
+      // Remove non-numeric chars just in case user typed "1000 yen" or "$100"
+      const cost = parseInt(costRaw.replace(/[^0-9]/g, ''), 10) || 0;
 
       // Extract Cover Image
       let coverImage = "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&q=80"; // Fallback
@@ -261,9 +262,13 @@ export const createPage = async (data: {
 
     if (data.cost !== undefined) {
       properties["預算"] = {
-        select: {
-          name: data.cost.toString(),
-        },
+        rich_text: [
+            {
+                text: {
+                    content: data.cost.toString()
+                }
+            }
+        ]
       };
     }
 
@@ -437,9 +442,13 @@ export const updatePage = async (
 
     if (updates.cost !== undefined) {
       properties["預算"] = {
-        select: {
-          name: updates.cost.toString(),
-        },
+        rich_text: [
+            {
+                text: {
+                    content: updates.cost.toString()
+                }
+            }
+        ]
       };
     }
 

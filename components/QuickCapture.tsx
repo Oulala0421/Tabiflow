@@ -499,36 +499,15 @@ export const QuickCapture = ({
           {/* Shared Fields: Date & Time & Area */}
           <div className="space-y-3">
              {/* Row 1: Date & Time */}
-             <div className="flex gap-4 items-center">
-                {/* Inbox Toggle Button */}
-                <button
-                    type="button"
-                    onClick={() => {
-                        if (!isInboxMode) {
-                            setIsInboxMode(true);
-                            setDate(""); // Clear date
-                        } else {
-                            setIsInboxMode(false);
-                            setDate(defaultDate || new Date().toISOString().split('T')[0]);
-                        }
-                    }}
-                    className={`flex items-center justify-center w-10 h-[46px] rounded-sm border transition-colors ${
-                        isInboxMode 
-                        ? "bg-indigo-600 border-indigo-500 text-white" 
-                        : "bg-zinc-900/50 border-zinc-800 text-zinc-500 hover:text-white"
-                    }`}
-                    title={isInboxMode ? "目前為待定行程 (點擊排程)" : "目前為已排程 (點擊放入待定)"}
-                >
-                    <Archive size={18} />
-                </button>
-
+             <div className="flex gap-4">
                 <div 
                    onClick={() => {
+                        // If inbox mode, allow clicking to enable
                         if (isInboxMode) {
-                            setIsInboxMode(false);
-                            // If date empty, set default
-                            if(!date) setDate(defaultDate || new Date().toISOString().split('T')[0]);
+                            // setIsInboxMode(false); // Don't force false immediately, let user pick
+                            // Actually we need to allow picker.
                         }
+                        
                         // Open picker
                         setTimeout(() => {
                              try {
@@ -538,7 +517,7 @@ export const QuickCapture = ({
                             }
                         }, 50);
                    }}
-                   className={`flex-1 bg-zinc-900/50 border border-zinc-800 rounded-sm p-3 flex items-center gap-3 focus-within:border-zinc-600 transition-colors cursor-pointer ${isInboxMode ? 'opacity-50' : ''}`}
+                   className={`flex-1 bg-zinc-900/50 border border-zinc-800 rounded-sm p-3 flex items-center gap-3 focus-within:border-zinc-600 transition-colors cursor-pointer ${isInboxMode ? 'opacity-70' : ''}`}
                 >
                    <Calendar size={16} className="text-zinc-500 shrink-0" />
                    <input
@@ -564,7 +543,7 @@ export const QuickCapture = ({
                             }
                        }, 50);
                    }}
-                   className={`flex-1 bg-zinc-900/50 border border-zinc-800 rounded-sm p-3 flex items-center gap-3 focus-within:border-zinc-600 transition-colors cursor-pointer ${isInboxMode ? 'opacity-50' : ''}`}
+                   className={`flex-1 bg-zinc-900/50 border border-zinc-800 rounded-sm p-3 flex items-center gap-3 focus-within:border-zinc-600 transition-colors cursor-pointer ${isInboxMode ? 'opacity-70' : ''}`}
                 >
                    <Clock size={16} className="text-zinc-500 shrink-0" />
                    <input

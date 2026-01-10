@@ -95,7 +95,7 @@ export const ItineraryCard = ({ item, prevItem, onClick }: ItineraryCardProps) =
 
                 {/* Rich Details Logic */}
                 {item.type === 'transport' && item.transport && (
-                     <div className="my-2 p-2 bg-zinc-900/50 rounded border border-zinc-800/50 flex items-center gap-3">
+                     <div className="my-2 p-2 bg-zinc-900/50 rounded border border-zinc-800/50 flex flex-wrap items-center gap-2">
                         <div className="w-6 h-6 rounded flex items-center justify-center bg-indigo-500/10 text-indigo-400 shrink-0">
                              <TrainFront size={12} />
                         </div>

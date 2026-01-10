@@ -499,7 +499,15 @@ export const QuickCapture = ({
                      </div>
                   </motion.div>
                 )}
-
+                setTransportMode("");
+            setPlatform("");
+            setCar("");
+            setSeat("");
+            setCheckIn("15:00");
+            setCheckOut("11:00");
+        }
+    }
+  }, [isOpen, initialData]);
               </motion.div>
             ) : (
               <motion.div 

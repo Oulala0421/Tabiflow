@@ -7,9 +7,18 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   console.log('[API /inbox GET] Request received');
   try {
-    const items = await getItinerary();
-    console.log(`[API /inbox GET] Retrieved ${items.length} items`);
-    return NextResponse.json(items);
+    // const items = await getItinerary();
+    // console.log(`[API /inbox GET] Retrieved ${items.length} items`);
+    // return NextResponse.json(items);
+    
+    // MOCK FOR TESTING VISUALS
+    const { INITIAL_DATA } = await import("@/lib/data");
+    const mockItems = INITIAL_DATA.map(i => ({
+        ...i,
+        // Ensure some fields match what the frontend expects if types mismatch slightly
+        id: i.id || Math.random().toString(),
+    }));
+    return NextResponse.json(mockItems);
   } catch (error: any) {
     console.error("[API /inbox GET] Error:", error?.message || error);
     return NextResponse.json(

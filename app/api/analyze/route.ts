@@ -36,13 +36,31 @@ export async function POST(request: Request) {
     const url = page.properties.URL?.url;
 
     // Skip if already processing or done
-    if (aiStatus === "Processing" || aiStatus === "Done") {
-      console.log(`[Analyze] Skipped: Status is ${aiStatus}`);
-      return NextResponse.json({
-        status: "skipped",
-        message: `Task already ${aiStatus.toLowerCase()}`,
-        aiStatus,
-      });
+    if (aiStatus === "Done") {
+       console.log(`[Analyze] Skipped: Status is Done`);
+       return NextResponse.json({
+         status: "skipped",
+         message: `Task already done`,
+         aiStatus,
+       });
+    }
+
+    if (aiStatus === "Processing") {
+        const lastEditedTime = new Date(page.last_edited_time).getTime();
+        const now = Date.now();
+        const diffMinutes = (now - lastEditedTime) / (1000 * 60);
+
+        if (diffMinutes < 10) {
+            console.log(`[Analyze] Skipped: Processing (Locked for ${Math.round(diffMinutes)}m)`);
+            return NextResponse.json({
+                status: "skipped",
+                message: `Task is currently processing`,
+                aiStatus,
+            });
+        }
+        
+        console.warn(`[Analyze] Zombie Lock Detected (${Math.round(diffMinutes)}m > 10m). Re-acquiring lock.`);
+        // Fall through to Step 2 to re-lock and process
     }
 
     // Validate URL exists

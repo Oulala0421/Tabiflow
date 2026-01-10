@@ -263,7 +263,7 @@ export const updatePage = async (
     mapsUrl?: string;
     categories?: string[];
     status?: string;
-    status?: string;
+
     date?: string; // ISO string YYYY-MM-DD
     time?: string; // HH:mm
     cost?: number;

@@ -245,10 +245,18 @@ export default function App() {
 
       if (type === 'transport') {
         const mode = data.transportMode || "交通工具";
+        // [Fix] Consistent Prefix: Add '前往 ' if missing, even for updates
         if (!data.id) {
              finalTitle = `前往 ${data.title}`; 
         } else {
-             finalTitle = data.title;
+             // For update, check if user removed it or if we should enforce it.
+             // User Request: Either remove everywhere or enforce everywhere.
+             // Let's enforce it for consistency if it's a transport item.
+             if (!data.title.startsWith("前往 ")) {
+                finalTitle = `前往 ${data.title}`;
+             } else {
+                finalTitle = data.title;
+             }
         }
         
         transportInfo = {

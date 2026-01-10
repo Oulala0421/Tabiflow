@@ -140,17 +140,20 @@ export const QuickCapture = ({
           title, 
           // If user set a date, force status to Scheduled (unless they explicitly cleared it via inbox toggle, which we handled by clearing date state)
           // Actually, let's rely on: If date is present -> Scheduled. If no date -> Inbox.
-          date: date, 
-          time: (!date) ? "TBD" : (time || "待定"), 
+          // [Fix] Priority: isInboxMode toggled manually supersedes date value presence if conflicting (e.g. user toggled inbox but date remains in state)
+          // But our toggle clears date state. So (!date) check is likely safe IF toggle works correctly.
+          // However, to be extra safe as per user request:
+          date: (isInboxMode) ? "" : date, 
+          time: (isInboxMode || !date) ? "TBD" : (time || "待定"), 
           area: area || "待定", 
           type: 'manual',
           selectedType: selectedType,
-          status: (!date) ? 'Inbox' : (initialData?.status === 'Done' ? 'Done' : 'Scheduled'), 
+          status: (isInboxMode || !date) ? 'Inbox' : (initialData?.status === 'Done' ? 'Done' : 'Scheduled'), 
           // Advanced Fields
           mapsUrl: advancedMapUrl,
           websiteUrl: advancedWebUrl,
           memo: advancedMemo,
-          cost: cost ? parseInt(cost) : 0,
+          cost: cost ? Number(cost) : 0,
           currency: 'JPY'
         };
 

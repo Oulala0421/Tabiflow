@@ -143,7 +143,7 @@ export const getItinerary = async (): Promise<ItineraryItem[]> => {
       const title = props["地點名稱"]?.title[0]?.plain_text || "Untitled";
 
       // Extract Date & Time
-      const rawDate = props["日期 (Date)"]?.date?.start || new Date().toISOString();
+      const rawDate = props["日期"]?.date?.start || new Date().toISOString();
       const dateObj = new Date(rawDate);
       const dateStr = rawDate.split("T")[0]; // YYYY-MM-DD
       const hasTime = rawDate.includes("T");
@@ -152,14 +152,19 @@ export const getItinerary = async (): Promise<ItineraryItem[]> => {
         : "TBD";
 
       // Extract Area
-      const area = props["區域 (Area)"]?.select?.name || "Unknown Area";
+      const area = props["區域"]?.select?.name || "Unknown Area";
 
       // Extract Categories
-      const categories = props["類別 (Type)"]?.multi_select?.map((c) => c.name) || [];
+      const categories = props["類別"]?.multi_select?.map((c) => c.name) || [];
       const type = mapCategoryToType(categories);
 
-      // Extract Summary
-      const summary = props["AI 摘要"]?.rich_text?.map((t) => t.plain_text).join("") || "";
+      // Extract Summary & Extended Details
+      // The summary field might contain "AI 摘要" (rich_text)
+      const summary = props["AI摘要"]?.rich_text?.[0]?.plain_text || 
+                      props["AI 摘要"]?.rich_text?.[0]?.plain_text || ""; // Fallback
+
+      // Parse Transport & Accommodation from Summary if available
+      const { transport, accommodation } = parseSummaryToDetails(summary);
 
       // Extract Maps URL
       const mapsUrl = props["Google Maps"]?.url || null;
@@ -171,7 +176,7 @@ export const getItinerary = async (): Promise<ItineraryItem[]> => {
       const aiProcessing = props["AI Processing"]?.select?.name || undefined;
 
       // Extract Cost
-      const cost = props["預算 (Cost)"]?.number || 0;
+      const cost = props["預算"]?.number || props["預算 (Cost)"]?.number || 0;
 
       // Extract Cover Image
       let coverImage = "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&q=80"; // Fallback
@@ -383,7 +388,7 @@ export const updatePage = async (
     }
 
     if (updates.area) {
-      properties["區域 (Area)"] = {
+      properties["區域"] = {
         select: {
           name: updates.area,
         },
@@ -398,7 +403,7 @@ export const updatePage = async (
       
       const fullSummary = formatDetailsToSummary(updates.summary, updates.transport, updates.accommodation);
 
-      properties["AI 摘要"] = {
+      properties["AI摘要"] = {
         rich_text: [
           {
             text: {
@@ -416,7 +421,7 @@ export const updatePage = async (
     }
 
     if (updates.categories && updates.categories.length > 0) {
-      properties["類別 (Type)"] = {
+      properties["類別"] = {
         multi_select: updates.categories.map((cat) => ({ name: cat })),
       };
     }
@@ -438,7 +443,7 @@ export const updatePage = async (
         startInfo = `${updates.date}T${updates.time}:00`;
       }
 
-      properties["日期 (Date)"] = {
+      properties["日期"] = {
         date: {
           start: startInfo,
           // We can also infer time_zone if needed, usually Defaults to local
@@ -446,14 +451,11 @@ export const updatePage = async (
       };
     }
 
-    // [Emergency Fix] Disable Cost sync as the Notion column name is unknown and causes crash
-    /*
     if (updates.cost !== undefined) {
-      properties["預算 (Cost)"] = {
+      properties["預算"] = {
         number: updates.cost,
       };
     }
-    */
 
     await notion.pages.update({
       page_id: pageId,

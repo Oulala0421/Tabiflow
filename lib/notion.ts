@@ -161,7 +161,18 @@ export const getItinerary = async (): Promise<ItineraryItem[]> => {
       const summary = props["AI摘要"]?.rich_text?.[0]?.plain_text || "";
 
       // Parse Transport & Accommodation from Summary if available
-      const { transport, accommodation } = parseSummaryToDetails(summary);
+      let { transport, accommodation } = parseSummaryToDetails(summary);
+
+      // [Synthesis] Ensure transport object exists if type is transport
+      if (type === 'transport' && !transport) {
+          transport = {
+              mode: '交通', // Default
+              from: area || '待定',
+              to: title.replace(/^前往 /, ''),
+              platform: '-',
+              car: '-'
+          };
+      }
 
       // Extract Maps URL
       const mapsUrl = props["Google Maps"]?.url || null;

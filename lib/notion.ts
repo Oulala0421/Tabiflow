@@ -167,19 +167,27 @@ export const getItinerary = async (): Promise<ItineraryItem[]> => {
       let transport: any = undefined;
       let accommodation: any = undefined;
 
-      // Try parsing JSON
-      try {
-          if (transportJsonStr) transport = JSON.parse(transportJsonStr);
-          if (accommodationJsonStr) accommodation = JSON.parse(accommodationJsonStr);
-      } catch (e) {
-          console.error("Failed to parse JSON fields for page:", typedPage.id, e);
+      if (transportJsonStr) {
+        try {
+            transport = JSON.parse(transportJsonStr);
+        } catch (e) {
+            console.error(`Status: [Error] Failed to parse TransportJSON for ${title}`, e);
+        }
       }
 
-      // Fallback: If no JSON data found (Legacy Data), parse from Summary
+      if (accommodationJsonStr) {
+        try {
+            accommodation = JSON.parse(accommodationJsonStr);
+        } catch (e) {
+            console.error(`Status: [Error] Failed to parse AccommodationJSON for ${title}`, e);
+        }
+      }
+
+      // 2. If JSON missing, Parse from Summary (Legacy/Fallback)
       if (!transport && !accommodation) {
-           const legacyData = parseSummaryToDetails(summary);
-           if (!transport) transport = legacyData.transport;
-           if (!accommodation) accommodation = legacyData.accommodation;
+         const details = parseSummaryToDetails(summary);
+         if (!transport) transport = details.transport;
+         if (!accommodation) accommodation = details.accommodation;
       }
 
       // [Synthesis] Ensure transport object exists if type is transport
@@ -239,6 +247,8 @@ export const getItinerary = async (): Promise<ItineraryItem[]> => {
         url,
         aiProcessing,
         cost,
+        transport,
+        accommodation
       };
     });
 

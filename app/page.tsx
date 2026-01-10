@@ -282,28 +282,46 @@ export default function App() {
       try {
         if (data.id) {
            // Optimistic Update for Edit
-           setItems(prev => prev.map(i => i.id === data.id ? { ...i, ...payload } : i));
+           const updatedItems = items.map(i => i.id === data.id ? { ...i, ...payload } : i);
+           setItems(updatedItems as any);
+           mutate(updatedItems as any, false); // Update SWR cache without revalidation (Prevent revert)
            
            await fetch(`/api/inbox/${data.id}`, {
                method: 'PATCH',
                body: JSON.stringify(payload)
            });
            addToast("行程已更新", 'success');
+           // Do NOT fetchItems() immediately logic, let polling handle it (Notion is eventually consistent)
         } else {
            // Optimistic Add (Temporary ID)
            const tempId = "temp_" + Date.now();
-           setItems(prev => [...prev, { id: tempId, ...payload, type: type as any, activeDates: [] } as any]);
+           const newItem = { id: tempId, ...payload, type: type as any, activeDates: [] };
+           const updatedItems = [...items, newItem];
+           
+           setItems(updatedItems as any);
+           mutate(updatedItems as any, false);
 
-           await fetch('/api/inbox', {
+           const res = await fetch('/api/inbox', {
                method: 'POST',
                body: JSON.stringify(payload)
            });
+           
+           if (res.ok) {
+               const json = await res.json(); 
+               if (json.id) {
+                   // Patch the Real ID into our local state & SWR cache
+                   const fixedItems = updatedItems.map(i => i.id === tempId ? { ...i, id: json.id } : i);
+                   setItems(fixedItems as any);
+                   mutate(fixedItems as any, false);
+               }
+           }
            addToast("已新增行程", 'success');
+           // No fetchItems() needed, we manually patched the ID.
+           // SWR polling will consistent check later.
         }
-        fetchItems(); // Sync final ID
       } catch (e) {
         addToast("儲存失敗", "error");
-        fetchItems(); // Revert
+        fetchItems(); // Revert on actual error
       }
   };
 

@@ -333,8 +333,7 @@ export const updatePage = async (
       };
     }
 
-      };
-    }
+
 
     if (updates.date) {
       // Combine Date and Time if provided

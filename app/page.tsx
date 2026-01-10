@@ -224,7 +224,16 @@ export default function App() {
       setEditingItem(null);
       setIsQuickCaptureOpen(false);
 
-      // FORCE SWITCH to the target date so user sees the new item
+      // 🛑 [Fix 1] 攔截 AI 模式
+      // 如果是 AI 模式，QuickCapture 內部已經呼叫過 API 了，這裡不需要再做任何 API 請求
+      // 只要觸發資料重整即可
+      if (data.type === 'ai') {
+        addToast("AI 分析請求已送出，正在處理中...", 'success');
+        fetchItems(); // 重新抓取資料
+        return;       // 直接結束，不往下執行
+      }
+
+      // FORCE SWITCH to the target date
       if (data.date) {
           setSelectedDate(data.date);
       }
@@ -265,11 +274,10 @@ export default function App() {
           summaryText += `\n🔗 網站: ${data.websiteUrl}`;
       }
 
-      // Strip out auto-generated Transport/Stay details from summary to avoid duplication
-      // (Since lib/notion.ts will re-append them based on the structured objects)
+      // Strip out auto-generated details
       summaryText = summaryText
-        .replace(/\n\n🚆 .*?(\|.*?)*/g, "") // Remove Transport line
-        .replace(/\n\n🏨 .*?(\|.*?)*/g, "") // Remove Stay line
+        .replace(/\n\n🚆 .*?(\|.*?)*/g, "")
+        .replace(/\n\n🏨 .*?(\|.*?)*/g, "")
         .trim();
 
       const payload = {
@@ -288,20 +296,30 @@ export default function App() {
 
       try {
         if (data.id) {
-           // Optimistic Update for Edit
+           // [更新模式]
+           // 1. Optimistic Update (先假裝成功)
            const updatedItems = items.map(i => i.id === data.id ? { ...i, ...payload } : i);
            setItems(updatedItems as any);
-           mutate(updatedItems as any, false); // Update SWR cache without revalidation (Prevent revert)
+           mutate(updatedItems as any, false);
            
-           await fetch(`/api/inbox/${data.id}`, {
+           // 2. 發送 API
+           const res = await fetch(`/api/inbox/${data.id}`, {
                method: 'PATCH',
                headers: { 'Content-Type': 'application/json' },
                body: JSON.stringify(payload)
            });
+
+           // 🛑 [Fix 2] 檢查後端是否真的成功
+           if (!res.ok) {
+               const errData = await res.json();
+               console.error("[Update Failed] Server response:", errData);
+               throw new Error(errData.error || "Update failed");
+           }
+
            addToast("行程已更新", 'success');
-           // Do NOT fetchItems() immediately logic, let polling handle it (Notion is eventually consistent)
         } else {
-           // Optimistic Add (Temporary ID)
+           // [新增模式]
+           // 1. Optimistic Add
            const tempId = "temp_" + Date.now();
            const newItem = { id: tempId, ...payload, type: type as any, activeDates: [] };
            const updatedItems = [...items, newItem];
@@ -309,28 +327,35 @@ export default function App() {
            setItems(updatedItems as any);
            mutate(updatedItems as any, false);
 
+           // 2. 發送 API
            const res = await fetch('/api/inbox', {
                method: 'POST',
                headers: { 'Content-Type': 'application/json' },
                body: JSON.stringify(payload)
            });
            
-           if (res.ok) {
-               const json = await res.json(); 
-               if (json.id) {
-                   // Patch the Real ID into our local state & SWR cache
-                   const fixedItems = updatedItems.map(i => i.id === tempId ? { ...i, id: json.id } : i);
-                   setItems(fixedItems as any);
-                   mutate(fixedItems as any, false);
-               }
+           // 🛑 [Fix 3] 檢查後端是否真的成功
+           if (!res.ok) {
+               const errData = await res.json();
+               console.error("[Create Failed] Server response:", errData);
+               throw new Error(errData.error || "Create failed");
            }
+
+           // 3. 修正 ID (如果成功)
+           const json = await res.json(); 
+           if (json.id) {
+               const fixedItems = updatedItems.map(i => i.id === tempId ? { ...i, id: json.id } : i);
+               setItems(fixedItems as any);
+               mutate(fixedItems as any, false);
+           }
+           
            addToast("已新增行程", 'success');
-           // No fetchItems() needed, we manually patched the ID.
-           // SWR polling will consistent check later.
         }
-      } catch (e) {
-        addToast("儲存失敗", "error");
-        fetchItems(); // Revert on actual error
+      } catch (e: any) {
+        console.error("HandleUpdateItem Error:", e);
+        // 🛑 [Fix 4] 失敗時顯示錯誤並還原資料
+        addToast(`儲存失敗: ${e.message || "未知錯誤"}`, "error");
+        fetchItems(); // 強制從伺服器拉回正確資料 (Revert)
       }
   };
 

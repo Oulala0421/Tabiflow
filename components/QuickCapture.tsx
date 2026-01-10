@@ -235,7 +235,7 @@ export const QuickCapture = ({
         <X size={32} strokeWidth={1.5} />
       </button>
 
-      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto no-scrollbar pb-10">
+      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto overflow-x-hidden no-scrollbar pb-10">
         
         {/* Tabs - Hide tabs if editing */}
         {!initialData && (

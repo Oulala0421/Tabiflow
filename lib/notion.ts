@@ -89,7 +89,6 @@ const notion = new Client({
   auth: NOTION_API_KEY,
 });
 
-
 /**
  * Helper to determine the primary type icon/color based on Notion categories
  */
@@ -120,21 +119,9 @@ export const getItinerary = async (): Promise<ItineraryItem[]> => {
           does_not_equal: "Done",
         },
       },
-      /* sorts: [
-        {
-          property: "Date",
-          direction: "ascending",
-        },
-      ], */
     });
 
     const items = response.results.map((page: any) => {
-      // DEBUG: Log key names for the first item to verify schema
-      if (response.results.indexOf(page) === 0) {
-           console.log("[Notion Schema Debug] Properties:", Object.keys(page.properties));
-           // console.log(JSON.stringify(page.properties, null, 2)); 
-      }
-      
       // Cast the raw page to our partial NotionPage structure for safer access
       const typedPage = page as NotionPage;
       const props = typedPage.properties;
@@ -151,17 +138,15 @@ export const getItinerary = async (): Promise<ItineraryItem[]> => {
         ? dateObj.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false }) 
         : "TBD";
 
-      // Extract Area
-      const area = props["區域"]?.select?.name || "Unknown Area";
+      // Extract Area (Rich Text)
+      const area = props["區域"]?.rich_text?.[0]?.plain_text || "Unknown Area";
 
       // Extract Categories
       const categories = props["類別"]?.multi_select?.map((c) => c.name) || [];
       const type = mapCategoryToType(categories);
 
       // Extract Summary & Extended Details
-      // The summary field might contain "AI 摘要" (rich_text)
-      const summary = props["AI摘要"]?.rich_text?.[0]?.plain_text || 
-                      props["AI 摘要"]?.rich_text?.[0]?.plain_text || ""; // Fallback
+      const summary = props["AI摘要"]?.rich_text?.[0]?.plain_text || "";
 
       // Parse Transport & Accommodation from Summary if available
       const { transport, accommodation } = parseSummaryToDetails(summary);
@@ -175,8 +160,9 @@ export const getItinerary = async (): Promise<ItineraryItem[]> => {
       // Extract AI Processing Status
       const aiProcessing = props["AI Processing"]?.select?.name || undefined;
 
-      // Extract Cost
-      const cost = props["預算"]?.number || props["預算 (Cost)"]?.number || 0;
+      // Extract Cost (Select -> Number)
+      const costRaw = props["預算"]?.select?.name || "0";
+      const cost = parseInt(costRaw, 10) || 0;
 
       // Extract Cover Image
       let coverImage = "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&q=80"; // Fallback
@@ -188,7 +174,7 @@ export const getItinerary = async (): Promise<ItineraryItem[]> => {
         }
       }
 
-      // Map Status - Cast to specific union type defined in types/notion
+      // Map Status
       const rawStatus = props["處理狀態"]?.status?.name || "Inbox";
       const status = ["Inbox", "To Review", "Scheduled", "Done"].includes(rawStatus) 
         ? rawStatus 
@@ -208,7 +194,6 @@ export const getItinerary = async (): Promise<ItineraryItem[]> => {
         coverImage,
         lastEdited: typedPage.last_edited_time,
         url,
-
         aiProcessing,
         cost,
       };
@@ -228,7 +213,7 @@ export const createPage = async (data: {
   title: string;
   url?: string;
   date?: string;
-  time?: string; // Added time
+  time?: string;
   area?: string;
   status?: string;
   aiProcessing?: AIProcessingStatus;
@@ -261,7 +246,6 @@ export const createPage = async (data: {
       },
     };
 
-    // Add optional fields
     if (data.date) {
       let startInfo: string = data.date;
       if (data.time && data.time !== "TBD" && data.time !== "待定") {
@@ -275,17 +259,23 @@ export const createPage = async (data: {
       };
     }
 
-    if (data.cost) {
+    if (data.cost !== undefined) {
       properties["預算"] = {
-        number: data.cost,
+        select: {
+          name: data.cost.toString(),
+        },
       };
     }
 
     if (data.area) {
       properties["區域"] = {
-        select: {
-          name: data.area,
-        },
+        rich_text: [
+          {
+            text: {
+             content: data.area,
+            },
+          },
+        ],
       };
     }
 
@@ -356,9 +346,8 @@ export const updatePage = async (
     mapsUrl?: string;
     categories?: string[];
     status?: string;
-
-    date?: string; // ISO string YYYY-MM-DD
-    time?: string; // HH:mm
+    date?: string;
+    time?: string;
     cost?: number;
     transport?: any;
     accommodation?: any;
@@ -389,18 +378,17 @@ export const updatePage = async (
 
     if (updates.area) {
       properties["區域"] = {
-        select: {
-          name: updates.area,
-        },
+        rich_text: [
+          {
+            text: {
+              content: updates.area,
+            },
+          },
+        ],
       };
     }
 
     if (updates.summary !== undefined || updates.transport || updates.accommodation) {
-      // NOTE: This overwrites existing summary. ideally we read then append, but for now we assume UI sends full state or we overwrite.
-      // Since 'updates' might not have the old summary if we just moved a card, this is tricky.
-      // BUT QuickCapture Edit sends the 'memo' (summary).
-      // Let's assume valid data.
-      
       const fullSummary = formatDetailsToSummary(updates.summary, updates.transport, updates.accommodation);
 
       properties["AI摘要"] = {
@@ -434,10 +422,7 @@ export const updatePage = async (
       };
     }
 
-
-
     if (updates.date) {
-      // Combine Date and Time if provided
       let startInfo: string = updates.date;
       if (updates.time && updates.time !== "TBD" && updates.time !== "待定") {
         startInfo = `${updates.date}T${updates.time}:00`;
@@ -446,14 +431,15 @@ export const updatePage = async (
       properties["日期"] = {
         date: {
           start: startInfo,
-          // We can also infer time_zone if needed, usually Defaults to local
         },
       };
     }
 
     if (updates.cost !== undefined) {
       properties["預算"] = {
-        number: updates.cost,
+        select: {
+          name: updates.cost.toString(),
+        },
       };
     }
 

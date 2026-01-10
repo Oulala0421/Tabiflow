@@ -138,12 +138,14 @@ export const QuickCapture = ({
           // If editing, preserve ID, otherwise handleSaveItem will generate one
           id: initialData?.id,
           title, 
-          date: isInboxMode ? "" : date, // Clear date if inbox mode
-          time: isInboxMode ? "TBD" : (time || "待定"), 
+          // If user set a date, force status to Scheduled (unless they explicitly cleared it via inbox toggle, which we handled by clearing date state)
+          // Actually, let's rely on: If date is present -> Scheduled. If no date -> Inbox.
+          date: date, 
+          time: (!date) ? "TBD" : (time || "待定"), 
           area: area || "待定", 
           type: 'manual',
           selectedType: selectedType,
-          status: isInboxMode ? 'Inbox' : (initialData?.status === 'Inbox' ? 'Scheduled' : (initialData?.status || 'Scheduled')), // Logic to move out of inbox if date set
+          status: (!date) ? 'Inbox' : (initialData?.status === 'Done' ? 'Done' : 'Scheduled'), 
           // Advanced Fields
           mapsUrl: advancedMapUrl,
           websiteUrl: advancedWebUrl,
@@ -495,61 +497,89 @@ export const QuickCapture = ({
           </AnimatePresence>
 
           {/* Shared Fields: Date & Time & Area */}
-          <motion.div 
-            animate={{ opacity: isInboxMode ? 0.3 : 1, pointerEvents: isInboxMode ? 'none' : 'auto' }}
-            className="space-y-3 transition-opacity"
-          >
+          <div className="space-y-3">
              {/* Row 1: Date & Time */}
-             <div className="flex gap-4">
+             <div className="flex gap-4 items-center">
+                {/* Inbox Toggle Button */}
+                <button
+                    type="button"
+                    onClick={() => {
+                        if (!isInboxMode) {
+                            setIsInboxMode(true);
+                            setDate(""); // Clear date
+                        } else {
+                            setIsInboxMode(false);
+                            setDate(defaultDate || new Date().toISOString().split('T')[0]);
+                        }
+                    }}
+                    className={`flex items-center justify-center w-10 h-[46px] rounded-sm border transition-colors ${
+                        isInboxMode 
+                        ? "bg-indigo-600 border-indigo-500 text-white" 
+                        : "bg-zinc-900/50 border-zinc-800 text-zinc-500 hover:text-white"
+                    }`}
+                    title={isInboxMode ? "目前為待定行程 (點擊排程)" : "目前為已排程 (點擊放入待定)"}
+                >
+                    <Archive size={18} />
+                </button>
+
                 <div 
                    onClick={() => {
-                      if (!isInboxMode) {
-                        try {
-                            dateInputRef.current?.showPicker();
-                        } catch (err) {
-                            dateInputRef.current?.focus();
-                            dateInputRef.current?.click();
+                        if (isInboxMode) {
+                            setIsInboxMode(false);
+                            // If date empty, set default
+                            if(!date) setDate(defaultDate || new Date().toISOString().split('T')[0]);
                         }
-                      }
+                        // Open picker
+                        setTimeout(() => {
+                             try {
+                                dateInputRef.current?.showPicker();
+                            } catch (err) {
+                                dateInputRef.current?.focus();
+                            }
+                        }, 50);
                    }}
-                   className="flex-1 bg-zinc-900/50 border border-zinc-800 rounded-sm p-3 flex items-center gap-3 focus-within:border-zinc-600 transition-colors cursor-pointer"
+                   className={`flex-1 bg-zinc-900/50 border border-zinc-800 rounded-sm p-3 flex items-center gap-3 focus-within:border-zinc-600 transition-colors cursor-pointer ${isInboxMode ? 'opacity-50' : ''}`}
                 >
                    <Calendar size={16} className="text-zinc-500 shrink-0" />
                    <input
                      ref={dateInputRef}
                      type="date"
                      value={date}
-                     onChange={(e) => setDate(e.target.value)}
+                     onChange={(e) => {
+                         setDate(e.target.value);
+                         if(e.target.value) setIsInboxMode(false);
+                     }}
                      className="bg-transparent text-white w-full outline-none font-mono text-sm cursor-pointer"
-                     disabled={isInboxMode}
                    />
                 </div>
                 
                 <div 
                    onClick={() => {
-                      if (!isInboxMode) {
-                        try {
-                            timeInputRef.current?.showPicker();
-                        } catch (err) {
-                            timeInputRef.current?.focus();
-                            timeInputRef.current?.click();
-                        }
-                      }
+                      if (isInboxMode) setIsInboxMode(false);
+                      setTimeout(() => {
+                            try {
+                                timeInputRef.current?.showPicker();
+                            } catch (err) {
+                                timeInputRef.current?.focus();
+                            }
+                       }, 50);
                    }}
-                   className="flex-1 bg-zinc-900/50 border border-zinc-800 rounded-sm p-3 flex items-center gap-3 focus-within:border-zinc-600 transition-colors cursor-pointer"
+                   className={`flex-1 bg-zinc-900/50 border border-zinc-800 rounded-sm p-3 flex items-center gap-3 focus-within:border-zinc-600 transition-colors cursor-pointer ${isInboxMode ? 'opacity-50' : ''}`}
                 >
                    <Clock size={16} className="text-zinc-500 shrink-0" />
                    <input
                      ref={timeInputRef}
                      type="time"
                      value={time}
-                     onChange={(e) => setTime(e.target.value)}
+                     onChange={(e) => {
+                         setTime(e.target.value);
+                         if(e.target.value) setIsInboxMode(false);
+                     }}
                      className="bg-transparent text-white w-full outline-none font-mono text-sm cursor-pointer"
-                     disabled={isInboxMode}
                    />
                 </div>
              </div>
-          </motion.div>
+          </div>
 
           {/* Area - Always visible but styled subtly */}
            <div 

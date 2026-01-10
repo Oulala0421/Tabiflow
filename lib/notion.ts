@@ -197,7 +197,8 @@ export const getItinerary = async (): Promise<ItineraryItem[]> => {
               from: area || '待定',
               to: title.replace(/^前往 /, ''),
               platform: '-',
-              car: '-'
+              car: '-',
+              seat: '-'
           };
       }
 

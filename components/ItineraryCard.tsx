@@ -3,6 +3,7 @@ import { motion, Variants } from "framer-motion";
 import { Coffee, CheckCircle2, Navigation, TrainFront, BedDouble, ArrowRight, Soup } from "lucide-react";
 import { ExtendedItineraryItem } from "@/types/notion";
 import { getTypeLabel, getStatusColor, parseMinutes } from "@/lib/utils";
+import { VisualFallback } from "@/components/VisualFallback";
 
 // Variants
 const fadeInUp: Variants = {
@@ -69,21 +70,18 @@ export const ItineraryCard = ({ item, prevItem, onClick }: ItineraryCardProps) =
                     }}
                     className={`relative w-14 h-14 rounded-sm border border-zinc-800 bg-zinc-900 overflow-hidden transition-all ${item.mapsUrl ? 'active:scale-95 active:border-white ring-offset-2 ring-offset-zinc-950 hover:border-zinc-500' : ''}`}
                 >
-                <img 
-                    src={item.coverImage} 
-                    className={`w-full h-full object-cover transition-opacity ${item.status === 'Done' ? 'opacity-40 grayscale' : ''}`}
-                    alt={item.title}
-                />
-                {item.status === 'Done' && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                        <CheckCircle2 size={20} className="text-emerald-500" />
-                    </div>
-                )}
-                {item.mapsUrl && item.status !== 'Done' && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Navigation size={16} className="text-white drop-shadow-md" />
-                    </div>
-                )}
+                <VisualFallback item={item} className={`w-full h-full ${item.status === 'Done' ? 'opacity-40 grayscale' : ''}`}>
+                    {item.status === 'Done' && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                            <CheckCircle2 size={20} className="text-emerald-500" />
+                        </div>
+                    )}
+                    {item.mapsUrl && item.status !== 'Done' && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Navigation size={16} className="text-white drop-shadow-md" />
+                        </div>
+                    )}
+                </VisualFallback>
                 </div>
             </div>
 

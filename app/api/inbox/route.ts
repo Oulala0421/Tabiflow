@@ -43,9 +43,9 @@ export async function POST(req: NextRequest) {
         transport = { 
             mode: transportMode, 
             from: area,
-            // Capture potential extra fields if flat-mapped in future
-            // platform: body.platform, 
-            // car: body.car 
+            platform: body.transportPlatform, 
+            car: body.transportCar,
+            seat: body.transportSeat
         };
     }
 

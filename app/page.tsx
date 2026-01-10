@@ -17,6 +17,7 @@ import { DetailSheet } from "@/components/DetailSheet";
 import { QuickCapture } from "@/components/QuickCapture";
 import { WelcomeModal, AboutModal, SettingsModal } from "@/components/Modals";
 import { ItineraryCard } from "@/components/ItineraryCard";
+import { VisualFallback } from "@/components/VisualFallback";
 
 // Skeleton Component
 const SkeletonItem = () => (
@@ -517,8 +518,12 @@ export default function App() {
                     className="relative w-full aspect-[4/3] rounded-sm overflow-hidden group cursor-pointer"
                     onClick={() => setSelectedItem(heroItem)}
                 >
-                    <img src={heroItem.coverImage} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt={heroItem.title} />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    <VisualFallback 
+                        item={heroItem} 
+                        className="w-full h-full transition-transform duration-700 group-hover:scale-105"
+                        iconSize="text-6xl"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
                     
                     {heroItem.mapsUrl && (
                     <div 
@@ -528,13 +533,13 @@ export default function App() {
                         window.open(heroItem.mapsUrl!, '_blank');
                         }}
                     >
-                        <div className="w-16 h-16 flex items-center justify-center bg-black/20 backdrop-blur-md rounded-xl border border-white/10 hover:bg-black/40 transition-colors">
+                        <div className="w-16 h-16 flex items-center justify-center bg-black/20 backdrop-blur-md rounded-xl border border-white/10 hover:bg-black/40 transition-colors pointer-events-auto">
                             <Navigation size={32} className="text-white drop-shadow-md" />
                         </div>
                     </div>
                     )}
 
-                    <div className="absolute bottom-5 left-5 right-5 flex justify-between items-end">
+                    <div className="absolute bottom-5 left-5 right-5 flex justify-between items-end pointer-events-none">
                     <div className="max-w-[70%]">
                         <div className="flex items-center gap-2 mb-1">
                         <span className="bg-white text-black text-xs font-bold px-1.5 py-0.5 rounded-sm font-mono">
@@ -599,9 +604,9 @@ export default function App() {
                             className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden group cursor-pointer active:scale-95 transition-transform"
                          >
                              <div className="h-32 relative">
-                                 <img src={item.coverImage} className="w-full h-full object-cover" />
-                                 <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/90 to-transparent" />
-                                 <span className="absolute bottom-2 left-2 text-[10px] font-bold px-1.5 py-0.5 rounded-sm uppercase bg-zinc-800 border border-zinc-700 text-zinc-300">
+                                 <VisualFallback item={item} className="w-full h-full" />
+                                 <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/90 to-transparent pointer-events-none" />
+                                 <span className="absolute bottom-2 left-2 text-[10px] font-bold px-1.5 py-0.5 rounded-sm uppercase bg-zinc-800 border border-zinc-700 text-zinc-300 pointer-events-none">
                                      {getTypeLabel(item.type)}
                                  </span>
                              </div>

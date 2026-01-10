@@ -126,12 +126,16 @@ export const ItineraryCard = ({ item, prevItem, onClick }: ItineraryCardProps) =
                              </div>
                              <div className="w-[1px] h-4 bg-zinc-800" />
                              <div className="flex items-center gap-2">
-                                 {item.accommodation.isBreakfastIncluded && (
-                                     <Coffee size={12} className="text-orange-400" title="含早餐" />
-                                 )}
-                                 {item.accommodation.isDinnerIncluded && (
-                                     <Soup size={12} className="text-pink-400" title="含晚餐" />
-                                 )}
+                                {item.accommodation.isBreakfastIncluded && (
+                                    <div title="含早餐">
+                                        <Coffee size={12} className="text-orange-400" />
+                                    </div>
+                                )}
+                                {item.accommodation.isDinnerIncluded && (
+                                    <div title="含晚餐">
+                                        <Soup size={12} className="text-pink-400" />
+                                    </div>
+                                )}
                                  {!item.accommodation.isBreakfastIncluded && !item.accommodation.isDinnerIncluded && (
                                      <span className="text-zinc-600">無餐點</span>
                                  )}

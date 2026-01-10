@@ -45,6 +45,7 @@ export const QuickCapture = ({
   // Transport Fields
   const [platform, setPlatform] = useState("");
   const [car, setCar] = useState("");
+  const [seat, setSeat] = useState("");
 
   // Accommodation Fields
   const [checkIn, setCheckIn] = useState("15:00");
@@ -71,6 +72,7 @@ export const QuickCapture = ({
             setArea(initialData.transport.from || "");
             setPlatform(initialData.transport.platform || "");
             setCar(initialData.transport.car || "");
+            setSeat(initialData.transport.seat || "");
         }
 
         // Handle Accommodation
@@ -330,6 +332,7 @@ export const QuickCapture = ({
                 />
 
                 {/* Transport Mode Selection (Visible only for transport) */}
+                {/* Transport Mode Selection (Visible only for transport) */}
                 {selectedType === 'transport' && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
@@ -349,6 +352,37 @@ export const QuickCapture = ({
                           placeholder="交通方式 (例如：JR 山手線)"
                           className="bg-transparent text-white w-full outline-none font-mono text-sm placeholder:text-zinc-700"
                         />
+                     </div>
+                     
+                     {/* Platform / Car / Seat Inputs */}
+                     <div className="grid grid-cols-3 gap-2">
+                        <div className="bg-zinc-900/50 border border-zinc-800 rounded-sm p-2 flex items-center gap-2">
+                           <span className="text-zinc-600 text-xs whitespace-nowrap">月台</span>
+                           <input
+                             value={platform}
+                             onChange={(e) => setPlatform(e.target.value)}
+                             placeholder="-"
+                             className="bg-transparent text-white w-full outline-none font-mono text-xs text-center"
+                           />
+                        </div>
+                        <div className="bg-zinc-900/50 border border-zinc-800 rounded-sm p-2 flex items-center gap-2">
+                           <span className="text-zinc-600 text-xs whitespace-nowrap">車廂</span>
+                           <input
+                             value={car}
+                             onChange={(e) => setCar(e.target.value)}
+                             placeholder="-"
+                             className="bg-transparent text-white w-full outline-none font-mono text-xs text-center"
+                           />
+                        </div>
+                        <div className="bg-zinc-900/50 border border-zinc-800 rounded-sm p-2 flex items-center gap-2">
+                           <span className="text-zinc-600 text-xs whitespace-nowrap">座位</span>
+                           <input
+                             value={seat}
+                             onChange={(e) => setSeat(e.target.value)}
+                             placeholder="-"
+                             className="bg-transparent text-white w-full outline-none font-mono text-xs text-center"
+                           />
+                        </div>
                      </div>
                      
                      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">

@@ -380,6 +380,18 @@ export const createPage = async (data: {
           },
         ],
       };
+
+      if (data.transport) {
+          properties["TransportJSON"] = {
+              rich_text: [{ text: { content: JSON.stringify(data.transport) } }]
+          };
+      }
+
+      if (data.accommodation) {
+          properties["AccommodationJSON"] = {
+              rich_text: [{ text: { content: JSON.stringify(data.accommodation) } }]
+          };
+      }
     }
 
     if (data.mapsUrl) {
@@ -469,6 +481,18 @@ export const updatePage = async (
           },
         ],
       };
+
+      if (updates.transport) {
+          properties["TransportJSON"] = {
+              rich_text: [{ text: { content: JSON.stringify(updates.transport) } }]
+          };
+      }
+
+      if (updates.accommodation) {
+          properties["AccommodationJSON"] = {
+              rich_text: [{ text: { content: JSON.stringify(updates.accommodation) } }]
+          };
+      }
     }
 
     if (updates.mapsUrl) {

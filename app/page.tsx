@@ -259,13 +259,14 @@ export default function App() {
              }
         }
         
+        
         transportInfo = {
            mode: mode,
            from: data.area || "出發地",
            to: data.title,
            platform: data.transportPlatform || "-",
            car: data.transportCar || "-",
-           seat: "自由座",
+           seat: data.transportSeat || "自由座",
            duration: "-" 
         };
       } else if (type === 'stay') {

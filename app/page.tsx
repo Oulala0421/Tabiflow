@@ -265,6 +265,13 @@ export default function App() {
           summaryText += `\n🔗 網站: ${data.websiteUrl}`;
       }
 
+      // Strip out auto-generated Transport/Stay details from summary to avoid duplication
+      // (Since lib/notion.ts will re-append them based on the structured objects)
+      summaryText = summaryText
+        .replace(/\n\n🚆 .*?(\|.*?)*/g, "") // Remove Transport line
+        .replace(/\n\n🏨 .*?(\|.*?)*/g, "") // Remove Stay line
+        .trim();
+
       const payload = {
         title: finalTitle,
         time: data.time === "待定" ? "TBD" : data.time,
@@ -288,6 +295,7 @@ export default function App() {
            
            await fetch(`/api/inbox/${data.id}`, {
                method: 'PATCH',
+               headers: { 'Content-Type': 'application/json' },
                body: JSON.stringify(payload)
            });
            addToast("行程已更新", 'success');
@@ -303,6 +311,7 @@ export default function App() {
 
            const res = await fetch('/api/inbox', {
                method: 'POST',
+               headers: { 'Content-Type': 'application/json' },
                body: JSON.stringify(payload)
            });
            

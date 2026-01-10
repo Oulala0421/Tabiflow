@@ -24,9 +24,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     console.log('[API /inbox POST] Body:', JSON.stringify(body, null, 2));
-    const { url, title, status } = body;
-
-    if (!url && !title) {
+    if (!body.url && !body.title) {
         return NextResponse.json(
             { error: "URL or Title is required" },
             { status: 400 }

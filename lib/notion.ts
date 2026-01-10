@@ -446,11 +446,14 @@ export const updatePage = async (
       };
     }
 
+    // [Emergency Fix] Disable Cost sync as the Notion column name is unknown and causes crash
+    /*
     if (updates.cost !== undefined) {
       properties["預算 (Cost)"] = {
         number: updates.cost,
       };
     }
+    */
 
     await notion.pages.update({
       page_id: pageId,

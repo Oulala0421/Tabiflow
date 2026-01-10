@@ -274,7 +274,9 @@ export default function App() {
         date: data.date,
         summary: summaryText,
         cost: data.cost,
-        categories: [getTypeLabel(type)], 
+        categories: [getTypeLabel(type)],
+        transport: transportInfo,
+        accommodation: accommodationInfo 
       };
 
       try {

@@ -147,7 +147,15 @@ export const getItinerary = async (): Promise<ItineraryItem[]> => {
 
       // Extract Categories
       const categories = props["類別"]?.multi_select?.map((c) => c.name) || [];
-      const type = mapCategoryToType(categories);
+      let type = mapCategoryToType(categories);
+
+      // [Fallback] Robustness for Transport items
+      // If type is still activity but title starts with "前往" or area is "交通", force transport
+      if (type === 'activity') {
+        if (title.startsWith("前往 ") || area === "交通") {
+             type = 'transport';
+        }
+      }
 
       // Extract Summary & Extended Details
       const summary = props["AI摘要"]?.rich_text?.[0]?.plain_text || "";

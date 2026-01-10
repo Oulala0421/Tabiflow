@@ -93,8 +93,23 @@ export const QuickCapture = ({
         if (initialData.status === 'Inbox') {
             setIsInboxMode(true);
         }
+    } else {
+        // Reset to Defaults
+        setTitle("");
+        setSelectedType("activity"); // Default
+        setMemo("");
+        setMoney("");
+        setTransportMode("");
+        setPlatform("");
+        setCar("");
+        setSeat("");
+        setCheckIn("15:00");
+        setCheckOut("11:00");
+        setFacilities("");
+        setIsBreakfastIncluded(false);
+        setIsDinnerIncluded(false);
     }
-  }, [initialData]);
+  }, [isOpen, initialData]);
 
 
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -499,15 +514,7 @@ export const QuickCapture = ({
                      </div>
                   </motion.div>
                 )}
-                setTransportMode("");
-            setPlatform("");
-            setCar("");
-            setSeat("");
-            setCheckIn("15:00");
-            setCheckOut("11:00");
-        }
-    }
-  }, [isOpen, initialData]);
+
               </motion.div>
             ) : (
               <motion.div 

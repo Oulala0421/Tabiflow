@@ -13,7 +13,7 @@ export const VisualFallback = ({ item, className, children, iconSize = "text-2xl
   const [imgError, setImgError] = useState(false);
   
   // Deterministic visual data
-  const { gradient, emoji } = getVisualForItem(item.id, item.type, item.title);
+  const { gradient, emoji } = getVisualForItem(item.id, item.type, item.title, item.transport?.mode);
 
   // Check if we have a valid image URL (and not failed previously)
   // Logic: if coverImage exists AND not errored, try to show it.

@@ -46,6 +46,19 @@ const KEYWORD_EMOJIS: Record<string, string> = {
   "松山": "✈️"
 };
 
+const TRANSPORT_MODE_EMOJIS: Record<string, string> = {
+  "飛機": "✈️",
+  "電車": "🚆",
+  "地鐵": "🚇",
+  "新幹線": "🚄",
+  "公車": "🚌",
+  "巴士": "🚌",
+  "計程車": "🚕",
+  "步行": "🚶",
+  "腳踏車": "🚲",
+  "自駕": "🚗"
+};
+
 // Helper: DJB2 Hash function for deterministic randomness
 function hashString(str: string): number {
   let hash = 5381;
@@ -55,7 +68,7 @@ function hashString(str: string): number {
   return Math.abs(hash);
 }
 
-export function getVisualForItem(id: string, type: ItineraryType, title: string) {
+export function getVisualForItem(id: string, type: ItineraryType, title: string, transportMode?: string) {
   // 1. Deterministic Hash
   const hash = hashString(id || title || "default");
   
@@ -63,18 +76,30 @@ export function getVisualForItem(id: string, type: ItineraryType, title: string)
   const gradientClass = GRADIENTS[hash % GRADIENTS.length];
 
   // 3. Select Emoji
-  // Priority: Keyword Match > Type Random > Default
+  // Priority: Transport Mode > Keyword Match > Type Random > Default
   let emoji = "📍";
   
-  // Try keywords
-  for (const [key, val] of Object.entries(KEYWORD_EMOJIS)) {
-    if (title.includes(key)) {
-      emoji = val;
-      break;
-    }
+  // Try Transport Mode
+  if (type === 'transport' && transportMode) {
+      for (const [key, val] of Object.entries(TRANSPORT_MODE_EMOJIS)) {
+          if (transportMode.includes(key)) {
+              emoji = val;
+              break;
+          }
+      }
   }
 
-  // If no keyword match, use Type Random (deterministic)
+  // Try keywords (if not yet found by transport mode)
+  if (emoji === "📍") {
+      for (const [key, val] of Object.entries(KEYWORD_EMOJIS)) {
+        if (title.includes(key)) {
+          emoji = val;
+          break;
+        }
+      }
+  }
+
+  // If still no match, use Type Random (deterministic)
   if (emoji === "📍") {
     const pool = TYPE_EMOJIS[type] || ["📍"];
     emoji = pool[hash % pool.length];

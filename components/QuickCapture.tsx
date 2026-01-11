@@ -638,8 +638,8 @@ export const QuickCapture = ({
                 <Banknote size={16} className="text-yellow-500 shrink-0" />
                 <input
                     type="number"
-                    value={cost}
-                    onChange={(e) => setCost(e.target.value)}
+                    value={money}
+                    onChange={(e) => setMoney(e.target.value)}
                     placeholder="預估花費 (JPY)"
                     className="bg-transparent text-white w-full outline-none font-mono text-sm placeholder:text-zinc-700"
                 />

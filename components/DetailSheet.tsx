@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   X, MapPin, Navigation, ExternalLink, Check, Edit2, Banknote, BedDouble, 
-  Coffee, Soup, TrainFront, ArrowRight, Trash2 
+  Coffee, Soup, TrainFront, ArrowRight, Trash2, Plane 
 } from "lucide-react";
 import { ExtendedItineraryItem, ItineraryStatus } from "@/types/notion";
 import { getTypeLabel, getStatusColor, getStatusLabel } from "@/lib/utils";
@@ -243,24 +243,55 @@ export const DetailSheet = ({
 
                  {/* Middle: Grid Details */}
                  <div className="grid grid-cols-3 divide-x divide-zinc-800">
-                    <div className="p-3 text-center">
-                       <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">月台</div>
-                       <div className="text-lg font-mono font-bold text-indigo-400">{item.transport.platform || "-"}</div>
-                    </div>
-                    <div className="p-3 text-center">
-                       <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">車廂</div>
-                       <div className="text-lg font-mono font-bold text-white">{item.transport.car || "-"}</div>
-                    </div>
-                    <div className="p-3 text-center">
-                       <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">座位</div>
-                       <div className="text-lg font-mono font-bold text-white">{item.transport.seat || "-"}</div>
-                    </div>
+                    {/* Conditional Rendering for Flight vs Standard */}
+                    {item.transport.mode?.includes("飛機") ? (
+                         <>
+                            <div className="p-3 text-center">
+                                <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">班機</div>
+                                <div className="text-lg font-mono font-bold text-indigo-400">{item.transport.flightNumber || "-"}</div>
+                            </div>
+                            <div className="p-3 text-center">
+                                <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">航廈</div>
+                                <div className="text-lg font-mono font-bold text-white">{item.transport.terminal || "-"}</div>
+                            </div>
+                            <div className="p-3 text-center">
+                                <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">登機門</div>
+                                <div className="text-lg font-mono font-bold text-white">{item.transport.gate || "-"}</div>
+                            </div>
+                         </>
+                    ) : (
+                        <>
+                            <div className="p-3 text-center">
+                                <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">月台</div>
+                                <div className="text-lg font-mono font-bold text-indigo-400">{item.transport.platform || "-"}</div>
+                            </div>
+                            <div className="p-3 text-center">
+                                <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">車廂</div>
+                                <div className="text-lg font-mono font-bold text-white">{item.transport.car || "-"}</div>
+                            </div>
+                            <div className="p-3 text-center">
+                                <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">座位</div>
+                                <div className="text-lg font-mono font-bold text-white">{item.transport.seat || "-"}</div>
+                            </div>
+                        </>
+                    )}
                  </div>
 
                  {/* Bottom: Info Footer */}
                  <div className="bg-zinc-950 p-3 flex items-center justify-center gap-2 text-xs text-zinc-400 font-mono border-t border-zinc-800">
-                    <TrainFront size={14} />
+                    {item.transport.mode?.includes("飛機") ? <Plane size={14} /> : <TrainFront size={14} />}
                     <span>{item.transport.mode}</span>
+                    {/* Show Seat separately for flight if needed, or include in grid if space allows. 
+                        Design consistency implies 3 columns. For flight we have Flight, Terminal, Gate. Seat can be secondary or 4th?
+                        Let's check if we can add seat somewhere else or if 3 slots are enough. 
+                        Usually Flight#, Terminal, Gate are key. Seat is on ticket. 
+                        User screenshot showed Seat "Free Seating". 
+                        Let's put Seat in the footer or replace Flight#? No Flight# is important.
+                        Maybe 4 columns for flight? Or add seat to footer text.
+                    */}
+                    {item.transport.mode?.includes("飛機") && item.transport.seat && item.transport.seat !== "-" && (
+                        <span className="ml-2 border-l border-zinc-800 pl-2">座位 {item.transport.seat}</span>
+                    )}
                  </div>
               </div>
             </div>

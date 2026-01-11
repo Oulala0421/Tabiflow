@@ -1,6 +1,7 @@
 import { getPageById, updatePage } from "@/lib/notion";
 import { scrapeUrl } from "@/lib/scraper";
 import { analyzeContent } from "@/lib/gemini";
+import { fetchGoogleMapsDetails } from "@/lib/google-maps";
 import { NextResponse } from "next/server";
 
 // Force dynamic to ensure real-time processing
@@ -98,8 +99,17 @@ export async function POST(request: Request) {
         console.error(`[Analyze] Scraping failed, proceeding with URL only:`, e);
     }
 
-    // 3.2 AI Analysis (Directly with URL and Context)
-    const analyzedData = await analyzeContent(url, scrapedContext);
+    // 3.X Google Maps Integration (Enhanced)
+    let googleMapsData = null;
+    const isGoogleMaps = url.includes("google.com/maps") || url.includes("maps.app.goo.gl") || url.includes("maps.google.com");
+    if (isGoogleMaps) {
+         console.log(`[Analyze] Detected Google Maps URL, fetching details via Places API...`);
+         googleMapsData = await fetchGoogleMapsDetails(url);
+         if(googleMapsData) console.log(`[Analyze] Google Maps Data: Found ${googleMapsData.title}`);
+    }
+
+    // 3.2 AI Analysis (Directly with URL and Context and MapsData)
+    const analyzedData = await analyzeContent(url, scrapedContext, googleMapsData);
 
     // ========================================
     // STEP 4: UPDATE (Write back + Unlock)

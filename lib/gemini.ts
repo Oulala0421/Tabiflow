@@ -11,7 +11,11 @@ export interface AnalysisResult {
   mapsUrl: string | null;
 }
 
-export const analyzeContent = async (url: string, context?: string): Promise<AnalysisResult> => {
+export const analyzeContent = async (
+    url: string, 
+    context?: string,
+    googleMapsData?: any
+): Promise<AnalysisResult> => {
   if (!apiKey) {
     console.warn("GEMINI_API_KEY is not defined, returning fallback.");
     return fallbackResult(url);
@@ -27,25 +31,28 @@ export const analyzeContent = async (url: string, context?: string): Promise<Ana
 
     const prompt = `
     You are a travel assistant. I will provide a URL${context ? " and its scraped content" : ""}.
+    ${googleMapsData ? "I will also provide VERIFIED DATA from Google Maps API. Use this as the primary source of truth." : ""}
     
-    CRITICAL: If the Scraped Content contains messages like "JavaScript is disabled", "Enable JavaScript", or "Browser not supported", IGNORE the content completely and infer details solely from the URL and your knowledge base.
+    CRITICAL: If the Scraped Content contains messages like "JavaScript is disabled", "Enable JavaScript", or "Browser not supported", IGNORE the content completely and infer details solely from other sources.
 
     URL: ${url}
-    ${context ? `\n\nPage Content:\n${context.substring(0, 10000)}...` : ""}
+    ${context ? `\n\nPage Content:\n${context.substring(0, 5000)}...` : ""}
+    ${googleMapsData ? `\n\n[VERIFIED GOOGLE MAPS DATA]:\n${JSON.stringify(googleMapsData, null, 2)}` : ""}
 
     Task:
     1. Identify the specific place (Restaurant, Hotel, Attraction, etc).
     2. Provide a practical summary in Traditional Chinese (Taiwan) [繁體中文].
+       ${googleMapsData ? "-> Incorporate the verified address, rating, and opening hours into the summary naturally." : ""}
     3. Categorize it.
-    4. If it's a Google Maps URL, extract coordinates or place ID if possible (symbolically), or just pass the URL back as mapsUrl.
+    4. Return structured data.
     
     Return strictly JSON format:
     {
         "title": "Place Name (Traditional Chinese preferred)",
-        "summary": "2-3 sentences practical tips. If URL is invalid or 'Test', return a generic message.",
+        "summary": "2-3 sentences practical tips. Include rating/price if available.",
         "area": "District Name (e.g. Shibuya, Kyoto)",
         "category": ["Food" | "Shop" | "Activity" | "Stay" | "Transport"],
-        "mapsUrl": "${url}" 
+        "mapsUrl": "${googleMapsData?.googleMapsUri || url}" 
     }
   `;
 
@@ -66,11 +73,11 @@ export const analyzeContent = async (url: string, context?: string): Promise<Ana
     }
 
     return {
-      title: data.title || "Unknown Title",
+      title: data.title || googleMapsData?.title || "Unknown Title",
       summary: data.summary || "",
       area: data.area || "Unknown Area",
       category: safeCategories,
-      mapsUrl: data.mapsUrl || url,
+      mapsUrl: data.mapsUrl || googleMapsData?.googleMapsUri || url,
     };
 
   } catch (error) {

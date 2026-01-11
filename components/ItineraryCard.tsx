@@ -1,6 +1,6 @@
 import React from "react";
 import { motion, Variants } from "framer-motion";
-import { Coffee, CheckCircle2, Navigation, TrainFront, BedDouble, ArrowRight, Soup } from "lucide-react";
+import { Coffee, CheckCircle2, Navigation, TrainFront, BedDouble, ArrowRight, Soup, Plane } from "lucide-react";
 import { ExtendedItineraryItem } from "@/types/notion";
 import { getTypeLabel, getStatusColor, parseMinutes } from "@/lib/utils";
 import { VisualFallback } from "@/components/VisualFallback";
@@ -99,7 +99,7 @@ export const ItineraryCard = ({ item, prevItem, onClick }: ItineraryCardProps) =
                         {/* Top Row: Route Info */}
                         <div className="flex items-center gap-3 w-full">
                             <div className="w-6 h-6 rounded flex items-center justify-center bg-indigo-500/10 text-indigo-400 shrink-0">
-                                 <TrainFront size={12} />
+                                 {item.transport.mode?.includes("飛機") ? <Plane size={12} /> : <TrainFront size={12} />}
                             </div>
                             <div className="flex-1 min-w-0 flex items-center gap-2 text-xs text-zinc-400">
                                  <span className="truncate max-w-[80px]">{item.transport.from}</span>
@@ -115,16 +115,41 @@ export const ItineraryCard = ({ item, prevItem, onClick }: ItineraryCardProps) =
                                     {item.transport.mode}
                                 </span>
                             )}
-                            {(item.transport.platform && item.transport.platform !== '-') && (
-                                <span className="text-[9px] font-mono px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-300 border border-zinc-700 whitespace-nowrap">
-                                    月台 {item.transport.platform}
-                                </span>
+                            
+                            {/* Conditional Rendering: Flight vs Train */}
+                            {item.transport.mode?.includes("飛機") ? (
+                                <>
+                                    {(item.transport.flightNumber) && (
+                                        <span className="text-[9px] font-mono px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-300 border border-zinc-700 whitespace-nowrap">
+                                            {item.transport.flightNumber}
+                                        </span>
+                                    )}
+                                    {(item.transport.terminal) && (
+                                        <span className="text-[9px] font-mono px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-300 border border-zinc-700 whitespace-nowrap">
+                                            航廈 {item.transport.terminal}
+                                        </span>
+                                    )}
+                                    {(item.transport.gate) && (
+                                        <span className="text-[9px] font-mono px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-300 border border-zinc-700 whitespace-nowrap">
+                                            登機門 {item.transport.gate}
+                                        </span>
+                                    )}
+                                </>
+                            ) : (
+                                <>
+                                    {(item.transport.platform && item.transport.platform !== '-') && (
+                                        <span className="text-[9px] font-mono px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-300 border border-zinc-700 whitespace-nowrap">
+                                            月台 {item.transport.platform}
+                                        </span>
+                                    )}
+                                    {(item.transport.car && item.transport.car !== '-') && (
+                                        <span className="text-[9px] font-mono px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-300 border border-zinc-700 whitespace-nowrap">
+                                            {item.transport.car} 號車
+                                        </span>
+                                    )}
+                                </>
                             )}
-                             {(item.transport.car && item.transport.car !== '-') && (
-                                <span className="text-[9px] font-mono px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-300 border border-zinc-700 whitespace-nowrap">
-                                    {item.transport.car} 號車
-                                </span>
-                            )}
+
                              {(item.transport.seat && item.transport.seat !== '-') && (
                                 <span className="text-[9px] font-mono px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-300 border border-zinc-700 whitespace-nowrap">
                                     {item.transport.seat}

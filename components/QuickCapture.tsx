@@ -33,8 +33,6 @@ export const QuickCapture = ({
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isInboxMode, setIsInboxMode] = useState(false);
   
-  const [isInboxMode, setIsInboxMode] = useState(false);
-  
   // Cost State
   const [money, setMoney] = useState("");
   const [memo, setMemo] = useState(""); // Restored missing state

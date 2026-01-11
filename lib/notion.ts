@@ -217,7 +217,7 @@ export const getItinerary = async (): Promise<ItineraryItem[]> => {
       const cost = parseInt(costRaw.replace(/[^0-9]/g, ''), 10) || 0;
 
       // Extract Cover Image
-      let coverImage = "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&q=80"; // Fallback
+      let coverImage = ""; // Fallback to empty so VisualFallback can use gradient
       if (typedPage.cover) {
         if (typedPage.cover.type === "external") {
           coverImage = typedPage.cover.external?.url || coverImage;

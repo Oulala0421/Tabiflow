@@ -197,42 +197,23 @@ export const QuickCapture = ({
         onClose();
       }
     } else {
-      // AI Mode: Fire-and-forget to /api/capture
+      // AI Mode: Pass data to parent to handle (Optimistic UI)
       if (url.trim()) {
         setIsAnalyzing(true);
-
-        // Call capture API
-        fetch('/api/capture', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            url,
-            title: url, // Use URL as temporary title
-            date: isInboxMode ? undefined : date,
-            area: area || undefined,
-            status: isInboxMode ? 'Inbox' : 'Scheduled',
-          }),
-        })
-          .then(async (response) => {
-            if (response.ok) {
-              const data = await response.json();
-              // Notify parent to refresh
-              onSave({
-                type: 'ai',
-                status: isInboxMode ? 'Inbox' : 'Scheduled',
-              });
-              onClose();
-            } else {
-              throw new Error('Failed to capture');
-            }
-          })
-          .catch((error) => {
-            console.error('Capture failed:', error);
-            alert('加入失敗,請稍後再試');
-            setIsAnalyzing(false);
-          });
+        // Direct pass to parent
+        onSave({
+             url,
+             title: "AI Analyzing...", // Placeholder
+             status: isInboxMode ? 'Inbox' : 'Scheduled',
+             date: isInboxMode ? undefined : (date ? date : undefined),
+             time: time || "TBD",
+             summary: context, // Use context as memo/summary for AI
+             type: 'ai_pending' // Special flag for parent
+        });
+        // We don't close immediately here? actually usually onSave handles closing or refetching.
+        // But in this code structure, we should probably close after onSave.
+        // Wait, onSave in QuickCapture usually triggers fetchItems in parent.
+        onClose(); 
       }
     }
   };

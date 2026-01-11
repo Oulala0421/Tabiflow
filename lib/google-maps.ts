@@ -29,11 +29,21 @@ export const fetchGoogleMapsDetails = async (url: string): Promise<GooglePlaceDa
     const longUrl = await resolveShortUrl(url);
     console.log(`[GoogleMaps] Resolved URL: ${longUrl}`);
 
+    // [Fix] Clean the URL to ensure it's openable even if we fail to fetch details
+    const cleanUrl = cleanGoogleMapsUrl(longUrl);
+
     // 2. Extract Query / Place Name
     const query = extractQueryFromUrl(longUrl);
     if (!query) {
       console.warn("[GoogleMaps] Could not extract query from URL.");
-      return null;
+      // Return a partial object with just the clean URL so we can at least use that
+      return {
+          title: "",
+          address: "",
+          googleMapsUri: cleanUrl,
+          types: [],
+          summary: ""
+      };
     }
     console.log(`[GoogleMaps] Extracted query: ${query}`);
 
@@ -59,7 +69,10 @@ const resolveShortUrl = async (shortUrl: string): Promise<string> => {
     try {
         const response = await fetch(shortUrl, { 
             method: 'HEAD', 
-            redirect: 'manual' 
+            redirect: 'manual',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            }
         });
         const location = response.headers.get('location');
         if (location) return location;
@@ -167,4 +180,27 @@ const searchPlace = async (query: string): Promise<GooglePlaceData | null> => {
         summary: p.editorialSummary?.text,
         regularOpeningHours: p.regularOpeningHours
     };
+}
+/**
+ * Cleans Google Maps URL by removing unnecessary tracking parameters
+ */
+const cleanGoogleMapsUrl = (url: string): string => {
+    try {
+        const urlObj = new URL(url);
+        
+        // whitelist params: cid, q, id, place_id, ll, z
+        const allowedParams = ['cid', 'q', 'id', 'place_id', 'll', 'z', 'mid'];
+        const params = new URLSearchParams(urlObj.search);
+        
+        const newParams = new URLSearchParams();
+        allowedParams.forEach(p => {
+            if (params.has(p)) newParams.set(p, params.get(p)!);
+        });
+
+        // Reconstruct
+        urlObj.search = newParams.toString();
+        return urlObj.toString();
+    } catch (e) {
+        return url;
+    }
 }

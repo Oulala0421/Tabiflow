@@ -19,34 +19,7 @@ const formatDetailsToSummary = (
   transport?: any, // TransportInfo
   accommodation?: any // AccommodationInfo
 ): string => {
-  let text = baseSummary;
-
-  if (transport) {
-    const parts = [];
-    if (transport.mode) parts.push(`交通方式: ${transport.mode}`);
-    if (transport.flightNumber) parts.push(`班機: ${transport.flightNumber}`);
-    if (transport.from) parts.push(`出發地: ${transport.from}`);
-    if (transport.terminal) parts.push(`航廈: ${transport.terminal}`);
-    if (transport.gate) parts.push(`登機門: ${transport.gate}`);
-    if (transport.platform && transport.platform !== '-') parts.push(`月台: ${transport.platform}`);
-    if (transport.car && transport.car !== '-') parts.push(`車廂: ${transport.car}`);
-    if (transport.seat && transport.seat !== '-') parts.push(`座位: ${transport.seat}`);
-    if (parts.length > 0) text += (text ? "\n\n" : "") + (transport.mode?.includes("飛機") ? "✈️ " : "🚆 ") + parts.join(" | ");
-  }
-
-  if (accommodation) {
-    const parts = [];
-    if (accommodation.checkIn) parts.push(`In: ${accommodation.checkIn}`);
-    if (accommodation.checkOut) parts.push(`Out: ${accommodation.checkOut}`);
-    if (accommodation.isBreakfastIncluded) parts.push("含早餐");
-    if (accommodation.isDinnerIncluded) parts.push("含晚餐");
-    if (accommodation.facilities && accommodation.facilities.length > 0) {
-       parts.push(`設施: ${accommodation.facilities.join(", ")}`);
-    }
-    if (parts.length > 0) text += (text ? "\n\n" : "") + "🏨 " + parts.join(" | ");
-  }
-
-  return text;
+  return baseSummary;
 };
 
 // Helper: Parse Summary string back to Transport/Accommodation objects (Best Effort)

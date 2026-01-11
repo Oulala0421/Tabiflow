@@ -254,7 +254,7 @@ export default function App() {
            to: data.title,
            platform: data.transportPlatform || "-",
            car: data.transportCar || "-",
-           seat: data.transportSeat || "自由座",
+           seat: data.transportSeat || (data.transportMode?.includes("飛機") ? "-" : "自由座"),
            duration: "-",
            terminal: data.transportTerminal,
            gate: data.transportGate,

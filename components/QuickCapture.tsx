@@ -65,7 +65,7 @@ export const QuickCapture = ({
         setSelectedType(initialData.type);
         setAdvancedMapUrl(initialData.mapsUrl || "");
         setAdvancedMemo(initialData.summary || "");
-        setCost(initialData.cost ? initialData.cost.toString() : "");
+        setMoney(initialData.cost ? initialData.cost.toString() : "");
         
         // Handle Transport
         if (initialData.type === 'transport' && initialData.transport) {

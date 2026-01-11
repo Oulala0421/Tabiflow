@@ -95,30 +95,42 @@ export const ItineraryCard = ({ item, prevItem, onClick }: ItineraryCardProps) =
 
                 {/* Rich Details Logic */}
                 {item.type === 'transport' && item.transport && (
-                     <div className="my-2 p-2 bg-zinc-900/50 rounded border border-zinc-800/50 flex flex-wrap items-center gap-2">
-                        <div className="w-6 h-6 rounded flex items-center justify-center bg-indigo-500/10 text-indigo-400 shrink-0">
-                             <TrainFront size={12} />
+                     <div className="my-2 p-2 bg-zinc-900/50 rounded border border-zinc-800/50 flex flex-col gap-2">
+                        {/* Top Row: Route Info */}
+                        <div className="flex items-center gap-3 w-full">
+                            <div className="w-6 h-6 rounded flex items-center justify-center bg-indigo-500/10 text-indigo-400 shrink-0">
+                                 <TrainFront size={12} />
+                            </div>
+                            <div className="flex-1 min-w-0 flex items-center gap-2 text-xs text-zinc-400">
+                                 <span className="truncate max-w-[80px]">{item.transport.from}</span>
+                                 <ArrowRight size={10} className="text-zinc-600" />
+                                 <span className="truncate flex-1 text-zinc-300">{item.transport.to || item.title}</span>
+                            </div>
                         </div>
-                        <div className="flex-1 min-w-0 flex items-center gap-2 text-xs text-zinc-400">
-                             <span className="truncate max-w-[80px]">{item.transport.from}</span>
-                             <ArrowRight size={10} className="text-zinc-600" />
-                             <span className="truncate flex-1 text-zinc-300">{item.transport.to || item.title}</span>
+
+                        {/* Bottom Row: Badges (Mode, Platform, Car, Seat) */}
+                        <div className="flex flex-wrap items-center gap-2 pl-9">
+                            {item.transport.mode && (
+                                <span className="text-[9px] font-mono px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-400 whitespace-nowrap">
+                                    {item.transport.mode}
+                                </span>
+                            )}
+                            {(item.transport.platform && item.transport.platform !== '-') && (
+                                <span className="text-[9px] font-mono px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-300 border border-zinc-700 whitespace-nowrap">
+                                    月台 {item.transport.platform}
+                                </span>
+                            )}
+                             {(item.transport.car && item.transport.car !== '-') && (
+                                <span className="text-[9px] font-mono px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-300 border border-zinc-700 whitespace-nowrap">
+                                    {item.transport.car} 號車
+                                </span>
+                            )}
+                             {(item.transport.seat && item.transport.seat !== '-') && (
+                                <span className="text-[9px] font-mono px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-300 border border-zinc-700 whitespace-nowrap">
+                                    {item.transport.seat}
+                                </span>
+                            )}
                         </div>
-                        {item.transport.mode && (
-                            <span className="text-[9px] font-mono px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-500 whitespace-nowrap hidden sm:inline-block">
-                                {item.transport.mode}
-                            </span>
-                        )}
-                        {(item.transport.platform && item.transport.platform !== '-') && (
-                            <span className="text-[9px] font-mono px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-300 border border-zinc-700 whitespace-nowrap">
-                                月台 {item.transport.platform}
-                            </span>
-                        )}
-                         {(item.transport.car && item.transport.car !== '-') && (
-                            <span className="text-[9px] font-mono px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-300 border border-zinc-700 whitespace-nowrap">
-                                {item.transport.car} 號車
-                            </span>
-                        )}
                      </div>
                 )}
 
@@ -156,8 +168,12 @@ export const ItineraryCard = ({ item, prevItem, onClick }: ItineraryCardProps) =
                 <span className="text-[10px] font-mono text-zinc-500 uppercase px-1.5 py-0.5 bg-zinc-900 rounded border border-zinc-800">
                     {getTypeLabel(item.type)}
                 </span>
-                <span className="text-xs text-zinc-600">•</span>
-                <span className="text-xs text-zinc-500">{item.area}</span>
+                {item.area && item.area !== getTypeLabel(item.type) && (
+                    <>
+                        <span className="text-xs text-zinc-600">•</span>
+                        <span className="text-xs text-zinc-500">{item.area}</span>
+                    </>
+                )}
                 {item.status !== 'Scheduled' && item.status !== 'Done' && (
                     <span className={`ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-sm uppercase ${getStatusColor(item.status)} text-white`}>
                         {item.status}

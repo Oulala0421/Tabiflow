@@ -27,8 +27,9 @@ export const analyzeContent = async (url: string, context?: string): Promise<Ana
 
     const prompt = `
     You are a travel assistant. I will provide a URL${context ? " and its scraped content" : ""}.
-    Please infer the travel details based on the provided information.
     
+    CRITICAL: If the Scraped Content contains messages like "JavaScript is disabled", "Enable JavaScript", or "Browser not supported", IGNORE the content completely and infer details solely from the URL and your knowledge base.
+
     URL: ${url}
     ${context ? `\n\nPage Content:\n${context.substring(0, 10000)}...` : ""}
 
@@ -41,7 +42,7 @@ export const analyzeContent = async (url: string, context?: string): Promise<Ana
     Return strictly JSON format:
     {
         "title": "Place Name (Traditional Chinese preferred)",
-        "summary": "2-3 sentences practical tips",
+        "summary": "2-3 sentences practical tips. If URL is invalid or 'Test', return a generic message.",
         "area": "District Name (e.g. Shibuya, Kyoto)",
         "category": ["Food" | "Shop" | "Activity" | "Stay" | "Transport"],
         "mapsUrl": "${url}" 
@@ -56,11 +57,19 @@ export const analyzeContent = async (url: string, context?: string): Promise<Ana
     const cleanJson = jsonText.replace(/```json|```/g, "").trim();
     const data = JSON.parse(cleanJson);
 
+    // [Safety] Ensure category is always an array
+    let safeCategories = ["Activity"];
+    if (Array.isArray(data.category)) {
+        safeCategories = data.category;
+    } else if (typeof data.category === 'string') {
+        safeCategories = [data.category];
+    }
+
     return {
       title: data.title || "Unknown Title",
       summary: data.summary || "",
       area: data.area || "Unknown Area",
-      category: data.category || ["Activity"],
+      category: safeCategories,
       mapsUrl: data.mapsUrl || url,
     };
 

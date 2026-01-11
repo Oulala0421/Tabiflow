@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { ExtendedItineraryItem, ItineraryStatus } from "@/types/notion";
 import { getTypeLabel, getStatusColor, getStatusLabel } from "@/lib/utils";
+import { VisualFallback } from "./VisualFallback";
 
 export const DetailSheet = ({ 
     item, 
@@ -49,7 +50,7 @@ export const DetailSheet = ({
       >
         {/* Header Image */}
         <div className="relative h-64 w-full">
-          <img src={item.coverImage} className="w-full h-full object-cover rounded-t-2xl opacity-90" alt={item.title} />
+          <VisualFallback item={item} className="w-full h-full rounded-t-2xl opacity-90" iconSize="text-6xl" />
           <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent" />
           <button 
             onClick={onClose}

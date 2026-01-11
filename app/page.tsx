@@ -265,6 +265,7 @@ export default function App() {
              // 3. Initial Refresh to show the "Processing" card
              fetchItems();
 
+         } catch (e) {
              console.error(e);
              addToast("AI 請求失敗", 'error');
          }

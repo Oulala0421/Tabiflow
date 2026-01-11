@@ -1,54 +1,30 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { 
-  CalendarDays, Archive, Wallet, Settings, Navigation, Plus, MapPin, 
-} from "lucide-react";
-import { motion, AnimatePresence, Variants } from "framer-motion";
+import { Plus } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
+import useSWR from 'swr';
 
 // Types & Libs
-import { ExtendedItineraryItem, ItineraryStatus, ItineraryType } from "@/types/notion";
-import { INITIAL_DATA, DATES, MOCK_IMAGES, getImageForType } from "@/lib/data";
-import { getStatusColor, getStatusLabel, getTypeLabel } from "@/lib/utils";
+import { ExtendedItineraryItem, ItineraryStatus } from "@/types/notion";
+import { getStatusLabel, getTypeLabel } from "@/lib/utils";
 
 // Components
 import { ToastContainer, ToastContext, ToastType, Toast } from "@/components/Toast";
 import { DetailSheet } from "@/components/DetailSheet";
 import { QuickCapture } from "@/components/QuickCapture";
 import { WelcomeModal, AboutModal, SettingsModal } from "@/components/Modals";
-import { ItineraryCard } from "@/components/ItineraryCard";
-import { VisualFallback } from "@/components/VisualFallback";
 
-// Skeleton Component
-const SkeletonItem = () => (
-    <div className="flex items-center gap-4 py-2">
-        <div className="w-12 flex flex-col items-end gap-1">
-            <div className="h-3 w-8 bg-zinc-900 rounded skeleton-shimmer" />
-        </div>
-        <div className="relative z-10 flex-shrink-0">
-            <div className="w-14 h-14 bg-zinc-900 rounded-sm skeleton-shimmer" />
-        </div>
-        <div className="flex-1 border-b border-zinc-900 pb-6 pt-1">
-             <div className="h-5 w-3/4 bg-zinc-900 rounded mb-2 skeleton-shimmer" />
-             <div className="flex gap-2">
-                 <div className="h-3 w-16 bg-zinc-900 rounded skeleton-shimmer" />
-             </div>
-        </div>
-    </div>
-);
-
-const staggerContainer: Variants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
-};
-
-import useSWR from 'swr';
+// Refactored Components
+import { MainHeader } from "@/components/MainHeader";
+import { TimelineView } from "@/components/TimelineView";
+import { InboxView } from "@/components/InboxView";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function App() {
   // SWR for smart polling and caching
-  const { data: serverItems, error, mutate } = useSWR<ExtendedItineraryItem[]>('/api/inbox', fetcher, {
+  const { data: serverItems, mutate } = useSWR<ExtendedItineraryItem[]>('/api/inbox', fetcher, {
     refreshInterval: 10000, // Poll every 10 seconds
     revalidateOnFocus: true,
   });
@@ -113,28 +89,12 @@ export default function App() {
 
       if (scheduledDates.length === 0) return;
 
-      // If current selected date has no items, switch to the first available date
-      // Or maybe switch to the one closest to today? For now, first available which is usually earliest.
-      // But wait: if I just ADDED an item to a new date, I want to jump to it?
-      // Complicated to detect "Action". 
-      // Simple rule: If selectedDate is NOT in valid list, jump to first.
       if (!scheduledDates.includes(selectedDate)) {
-          // If we have dates, jump to the first one
           if (scheduledDates.length > 0) {
              setSelectedDate(scheduledDates[0]);
           }
       }
   }, [items, selectedDate]);
-
-  // Skeleton Loading Logic (Only on initial load or date switch if needed, but here generic)
-  /* 
-  useEffect(() => {
-     setIsLoading(true);
-     const timer = setTimeout(() => setIsLoading(false), 600);
-     return () => clearTimeout(timer);
-  }, [selectedDate, viewMode]);
-  */ 
-  // Disable fake skeleton logic, rely on real data loading state
 
   const [selectedItem, setSelectedItem] = useState<ExtendedItineraryItem | null>(null);
   const [isQuickCaptureOpen, setIsQuickCaptureOpen] = useState(false);
@@ -213,18 +173,12 @@ export default function App() {
           setItems(items.filter(i => i.id !== id));
           setSelectedItem(null);
           addToast("已刪除行程", 'info');
-          // No undo for API delete easily unless we implement restore or soft delete specific logic
       } catch (e) {
           addToast("刪除失敗", "error");
       }
   };
 
-
-
   const handleUpdateItem = async (data: any) => {
-      setEditingItem(null);
-      setIsQuickCaptureOpen(false);
-
       setEditingItem(null);
       setIsQuickCaptureOpen(false);
 
@@ -259,7 +213,7 @@ export default function App() {
                  headers: { 'Content-Type': 'application/json' },
                  body: JSON.stringify({ pageId: id })
              }).then(() => {
-                 fetchItems(); // Refresh again after analysis returns (optional/optimistic)
+                 fetchItems(); // Refresh again after analysis returns
              });
 
              // 3. Initial Refresh to show the "Processing" card
@@ -284,20 +238,15 @@ export default function App() {
 
       if (type === 'transport') {
         const mode = data.transportMode || "交通工具";
-        // [Fix] Consistent Prefix: Add '前往 ' if missing, even for updates
         if (!data.id) {
              finalTitle = `前往 ${data.title}`; 
         } else {
-             // For update, check if user removed it or if we should enforce it.
-             // User Request: Either remove everywhere or enforce everywhere.
-             // Let's enforce it for consistency if it's a transport item.
              if (!data.title.startsWith("前往 ")) {
                 finalTitle = `前往 ${data.title}`;
              } else {
                 finalTitle = data.title;
              }
         }
-        
         
         transportInfo = {
            mode: mode,
@@ -313,8 +262,6 @@ export default function App() {
       }
 
       let summaryText = data.summary || data.memo || "";
-      // Remove default AI summary generation to prevent duplication
-
 
       if (data.websiteUrl && !summaryText.includes(data.websiteUrl)) {
           summaryText += `\n🔗 網站: ${data.websiteUrl}`;
@@ -343,19 +290,16 @@ export default function App() {
       try {
         if (data.id) {
            // [更新模式]
-           // 1. Optimistic Update (先假裝成功)
-           const updatedItems = items.map(i => i.id === data.id ? { ...i, ...payload } : i);
-           setItems(updatedItems as any);
-           mutate(updatedItems as any, false);
+           const updatedItems = items.map(i => i.id === data.id ? { ...i, ...payload, type: type as any } : i);
+           setItems(updatedItems);
+           mutate(updatedItems, false);
            
-           // 2. 發送 API
            const res = await fetch(`/api/inbox/${data.id}`, {
                method: 'PATCH',
                headers: { 'Content-Type': 'application/json' },
                body: JSON.stringify(payload)
            });
 
-           // 🛑 [Fix 2] 檢查後端是否真的成功
            if (!res.ok) {
                const errData = await res.json();
                console.error("[Update Failed] Server response:", errData);
@@ -365,43 +309,44 @@ export default function App() {
            addToast("行程已更新", 'success');
         } else {
            // [新增模式]
-           // 1. Optimistic Add
            const tempId = "temp_" + Date.now();
-           const newItem = { id: tempId, ...payload, type: type as any, activeDates: [] };
+           const newItem: ExtendedItineraryItem = { 
+               id: tempId, 
+               ...payload, 
+               type: type as any, 
+               coverImage: "",
+               lastEdited: new Date().toISOString() 
+            };
            const updatedItems = [...items, newItem];
            
-           setItems(updatedItems as any);
-           mutate(updatedItems as any, false);
+           setItems(updatedItems);
+           mutate(updatedItems, false);
 
-           // 2. 發送 API
            const res = await fetch('/api/inbox', {
                method: 'POST',
                headers: { 'Content-Type': 'application/json' },
                body: JSON.stringify(payload)
            });
            
-           // 🛑 [Fix 3] 檢查後端是否真的成功
            if (!res.ok) {
                const errData = await res.json();
                console.error("[Create Failed] Server response:", errData);
                throw new Error(errData.error || "Create failed");
            }
 
-           // 3. 修正 ID (如果成功)
            const json = await res.json(); 
            if (json.id) {
                const fixedItems = updatedItems.map(i => i.id === tempId ? { ...i, id: json.id } : i);
-               setItems(fixedItems as any);
-               mutate(fixedItems as any, false);
+               setItems(fixedItems);
+               mutate(fixedItems, false);
            }
            
            addToast("已新增行程", 'success');
         }
       } catch (e: any) {
         console.error("HandleUpdateItem Error:", e);
-        // 🛑 [Fix 4] 失敗時顯示錯誤並還原資料
         addToast(`儲存失敗: ${e.message || "未知錯誤"}`, "error");
-        fetchItems(); // 強制從伺服器拉回正確資料 (Revert)
+        fetchItems(); 
       }
   };
 
@@ -409,254 +354,32 @@ export default function App() {
     <ToastContext.Provider value={{ addToast }}>
     <div className="min-h-screen pb-24 relative selection:bg-zinc-800">
       
-      {/* Sticky Header */}
-      <header className="sticky top-0 z-30 bg-zinc-950/90 backdrop-blur-md border-b border-zinc-900 transition-all">
-        <div className="px-5 py-3 flex justify-between items-center">
-           <div className="flex bg-zinc-900/80 p-1 rounded-lg border border-zinc-800/50">
-               <button 
-                  onClick={() => setViewMode('timeline')}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
-                      viewMode === 'timeline' 
-                      ? 'bg-zinc-800 text-white shadow-sm' 
-                      : 'text-zinc-500 hover:text-zinc-300'
-                  }`}
-               >
-                   <CalendarDays size={14} />
-                   行程
-               </button>
-               <button 
-                  onClick={() => setViewMode('inbox')}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
-                      viewMode === 'inbox' 
-                      ? 'bg-zinc-800 text-white shadow-sm' 
-                      : 'text-zinc-500 hover:text-zinc-300'
-                  }`}
-               >
-                   <Archive size={14} />
-                   待定
-                   {inboxItems.length > 0 && (
-                       <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 ml-1" />
-                   )}
-               </button>
-           </div>
-
-          <div className="flex items-center gap-3">
-            {viewMode === 'timeline' && (
-                <div className="flex items-center gap-1.5 text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded border border-yellow-500/20">
-                    <Wallet size={14} />
-                    <span className="text-xs font-mono font-bold">¥{dailyCost.toLocaleString()}</span>
-                </div>
-            )}
-            
-            <button 
-              onClick={() => setIsSettingsOpen(true)}
-              className="text-zinc-600 hover:text-white transition-colors p-1"
-            >
-              <Settings size={20} />
-            </button>
-          </div>
-        </div>
-        
-        {viewMode === 'timeline' && (
-            <motion.div 
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="flex items-center gap-2 px-5 pb-4 overflow-x-auto no-scrollbar"
-            >
-            {(() => {
-                // Computed Dates from Items
-                const scheduledItems = items.filter(i => i.status !== 'Inbox' && i.date);
-                const uniqueDates = Array.from(new Set(scheduledItems.map(i => i.date))).sort();
-                
-                // If clean slate (no items), maybe show today? Or just empty state?
-                // Let's show Today if list is empty, or include Today if it has no items but we want a default?
-                // User said: "If no schedule, it vanishes". So if completely empty, show nothing?
-                // But we need to allow adding. We'll rely on Quick Capture for adding active dates.
-                
-                // Helper to format date
-                const formatDate = (dateStr: string) => {
-                    const date = new Date(dateStr);
-                    const month = date.getMonth() + 1;
-                    const day = date.getDate();
-                    const dayOfWeek = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'][date.getDay()];
-                    return { full: dateStr, month: `${month}月`, day: dayOfWeek, label: String(day).padStart(2, '0') };
-                };
-
-                const displayDates = uniqueDates.map(formatDate);
-
-                if (displayDates.length === 0) {
-                   return (
-                       <div className="w-full text-center py-2 text-zinc-600 text-xs font-mono border border-zinc-900 border-dashed rounded bg-zinc-900/10">
-                           尚無已排程日期 -&gt; 點擊 + 新增
-                       </div>
-                   );
-                }
-
-                return displayDates.map((date, index) => {
-                    const isActive = date.full === selectedDate;
-                    const prevDate = displayDates[index - 1];
-                    const isNewMonth = !prevDate || date.month !== prevDate.month; // Simple check
-
-                    return (
-                    <React.Fragment key={date.full}>
-                        {isNewMonth && (
-                        <div className="flex flex-col justify-center items-center h-14 min-w-[32px] pl-1 pr-3 border-r border-transparent">
-                            <span className="text-xs font-bold text-zinc-500 writing-vertical-rl">{date.month}</span>
-                        </div>
-                        )}
-                        
-                        <button
-                        onClick={() => setSelectedDate(date.full)}
-                        className={`relative flex flex-col items-center justify-center min-w-[50px] h-14 rounded-sm border transition-all ${
-                            isActive 
-                            ? "bg-white border-white text-black shadow-[0_0_15px_rgba(255,255,255,0.3)]" 
-                            : "bg-zinc-900 border-zinc-800 text-zinc-500 hover:border-zinc-700"
-                        }`}
-                        >
-                        <span className="text-[10px] uppercase font-bold tracking-wide">{date.day}</span>
-                        <span className="text-lg font-bold leading-none">{date.label}</span>
-                        
-                        {/* Dot is redundant if we only show active days, but kept for style consistency or if we relax the rule later */}
-                        <span className={`absolute bottom-1 w-1 h-1 rounded-full ${isActive ? 'bg-black' : 'bg-indigo-500'}`} />
-                        </button>
-                    </React.Fragment>
-                    );
-                });
-            })()}
-            </motion.div>
-        )}
-      </header>
+      <MainHeader 
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        inboxCount={inboxItems.length}
+        dailyCost={dailyCost}
+        onSettingsClick={() => setIsSettingsOpen(true)}
+        items={items}
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+      />
 
       {/* Main Content Stream */}
       <main className="p-5 space-y-8 min-h-[60vh]">
         
-        {isLoading ? (
-            <div className="space-y-6">
-                {/* Hero Skeleton */}
-                <div className="w-full aspect-[4/3] bg-zinc-900 rounded-sm skeleton-shimmer" />
-                
-                {/* List Skeleton */}
-                <div className="space-y-6 pl-4 pt-4">
-                    <SkeletonItem />
-                    <SkeletonItem />
-                    <SkeletonItem />
-                    <SkeletonItem />
-                </div>
-            </div>
-        ) : viewMode === 'timeline' ? (
-           <>
-                {/* Hero Card (Next Up) */}
-                {heroItem ? (
-                <motion.div 
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="relative w-full aspect-[4/3] rounded-sm overflow-hidden group cursor-pointer"
-                    onClick={() => setSelectedItem(heroItem)}
-                >
-                    <VisualFallback 
-                        item={heroItem} 
-                        className="w-full h-full transition-transform duration-700 group-hover:scale-105"
-                        iconSize="text-6xl"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
-                    
-                    {heroItem.mapsUrl && (
-                    <div 
-                        className="absolute bottom-0 right-0 z-20 w-24 h-24 flex items-center justify-center active:bg-white/5 transition-colors cursor-pointer"
-                        onClick={(e) => {
-                        e.stopPropagation();
-                        window.open(heroItem.mapsUrl!, '_blank');
-                        }}
-                    >
-                        <div className="w-16 h-16 flex items-center justify-center bg-black/20 backdrop-blur-md rounded-xl border border-white/10 hover:bg-black/40 transition-colors pointer-events-auto">
-                            <Navigation size={32} className="text-white drop-shadow-md" />
-                        </div>
-                    </div>
-                    )}
-
-                    <div className="absolute bottom-5 left-5 right-5 flex justify-between items-end pointer-events-none">
-                    <div className="max-w-[70%]">
-                        <div className="flex items-center gap-2 mb-1">
-                        <span className="bg-white text-black text-xs font-bold px-1.5 py-0.5 rounded-sm font-mono">
-                            {heroItem.time}
-                        </span>
-                        <span className="text-zinc-300 text-xs font-mono uppercase tracking-wider truncate">
-                            {heroItem.area}
-                        </span>
-                        {heroItem.status !== 'Scheduled' && (
-                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm uppercase ${getStatusColor(heroItem.status)} text-white`}>
-                                {heroItem.status}
-                            </span>
-                        )}
-                        </div>
-                        <h2 className="text-2xl font-bold text-white leading-tight line-clamp-2">{heroItem.title}</h2>
-                    </div>
-                    </div>
-                </motion.div>
-                ) : (
-                <div className="w-full aspect-video bg-zinc-900 rounded-sm flex flex-col items-center justify-center text-zinc-600 border border-zinc-800 border-dashed">
-                    <span className="text-sm font-mono">本日無行程</span>
-                </div>
-                )}
-
-                {/* Timeline List */}
-                <motion.div 
-                    variants={staggerContainer}
-                    initial="hidden"
-                    animate="visible"
-                    className="relative pl-4 space-y-6"
-                >
-                <div className="absolute left-[29px] top-4 bottom-4 w-[1px] bg-zinc-800" />
-
-                {displayTimelineItems.map((item, index) => (
-                    <ItineraryCard 
-                        key={item.id} 
-                        item={item} 
-                        prevItem={displayTimelineItems[index - 1]}
-                        onClick={setSelectedItem}
-                    />
-                ))}
-                </motion.div>
-           </>
+        {viewMode === 'timeline' ? (
+           <TimelineView 
+              isLoading={isLoading}
+              heroItem={heroItem}
+              items={displayTimelineItems}
+              onSelectItem={setSelectedItem}
+           />
         ) : (
-            // INBOX VIEW
-            <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="grid grid-cols-2 gap-4"
-            >
-                {inboxItems.length === 0 ? (
-                    <div className="col-span-2 flex flex-col items-center justify-center py-20 text-zinc-600 border border-zinc-800 border-dashed rounded-xl bg-zinc-900/20">
-                        <Archive size={32} className="mb-4 opacity-50" />
-                        <p className="text-sm">待定清單是空的</p>
-                        <p className="text-xs mt-2">隨手記下想去的地方，之後再排程</p>
-                    </div>
-                ) : (
-                    inboxItems.map(item => (
-                         <div 
-                            key={item.id}
-                            onClick={() => setSelectedItem(item)}
-                            className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden group cursor-pointer active:scale-95 transition-transform"
-                         >
-                             <div className="h-32 relative">
-                                 <VisualFallback item={item} className="w-full h-full" />
-                                 <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/90 to-transparent pointer-events-none" />
-                                 <span className="absolute bottom-2 left-2 text-[10px] font-bold px-1.5 py-0.5 rounded-sm uppercase bg-zinc-800 border border-zinc-700 text-zinc-300 pointer-events-none">
-                                     {getTypeLabel(item.type)}
-                                 </span>
-                             </div>
-                             <div className="p-3">
-                                 <h3 className="text-sm font-bold text-white line-clamp-1 mb-1">{item.title}</h3>
-                                 <div className="flex items-center gap-1 text-xs text-zinc-500">
-                                     <MapPin size={10} />
-                                     {item.area}
-                                 </div>
-                             </div>
-                         </div>
-                    ))
-                )}
-            </motion.div>
+            <InboxView 
+                items={inboxItems}
+                onSelectItem={setSelectedItem}
+            />
         )}
 
       </main>

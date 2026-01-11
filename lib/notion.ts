@@ -125,7 +125,7 @@ export const getItinerary = async (): Promise<ItineraryItem[]> => {
       },
     });
 
-    const items = response.results.map((page: any) => {
+    const items = response.results.map((page: unknown) => {
       // Cast the raw page to our partial NotionPage structure for safer access
       const typedPage = page as NotionPage;
       const props = typedPage.properties;
@@ -183,11 +183,15 @@ export const getItinerary = async (): Promise<ItineraryItem[]> => {
         }
       }
 
-      // 2. If JSON missing, Parse from Summary (Legacy/Fallback)
+      // 2. If JSON missing, Parse from Summary (Legacy/Fallback for non-migrated data)
       if (!transport && !accommodation) {
-         const details = parseSummaryToDetails(summary);
-         if (!transport) transport = details.transport;
-         if (!accommodation) accommodation = details.accommodation;
+         try {
+             const details = parseSummaryToDetails(summary);
+             if (!transport) transport = details.transport;
+             if (!accommodation) accommodation = details.accommodation;
+         } catch (e) {
+             console.warn(`[Legacy Parser] Failed to parse summary for ${title}, ignoring legacy data.`);
+         }
       }
 
       // [Synthesis] Ensure transport object exists if type is transport
@@ -283,7 +287,7 @@ export const createPage = async (data: {
   }
 
   try {
-    const properties: any = {
+    const properties: Record<string, any> = {
       "地點名稱": {
         title: [
           {
@@ -436,7 +440,7 @@ export const updatePage = async (
   }
 ): Promise<void> => {
   try {
-    const properties: any = {};
+    const properties: Record<string, any> = {};
 
     if (updates.aiProcessing) {
       properties["AI Processing"] = {
@@ -571,7 +575,7 @@ export const getPageById = async (pageId: string): Promise<NotionPage> => {
     const response = await notion.pages.retrieve({
       page_id: pageId,
     });
-    return response as any as NotionPage;
+    return response as unknown as NotionPage;
   } catch (error) {
     console.error("Failed to retrieve Notion page:", error);
     throw error;

@@ -104,8 +104,8 @@ export const QuickCapture = ({
         setPlatform("");
         setCar("");
         setSeat("");
-        setCheckIn("15:00");
-        setCheckOut("11:00");
+        setCheckIn("11:00");
+        setCheckOut("15:00");
         setFacilities("");
         setIsBreakfastIncluded(false);
         setIsDinnerIncluded(false);
@@ -185,8 +185,8 @@ export const QuickCapture = ({
         }    
         if (selectedType === 'stay') {
             payload.accommodation = {
-                checkIn: checkIn || "15:00",
-                checkOut: checkOut || "11:00",
+                checkIn: checkIn || "11:00",
+                checkOut: checkOut || "15:00",
                 isBreakfastIncluded,
                 isDinnerIncluded,
                 facilities: facilities.split(',').map(f => f.trim()).filter(Boolean)

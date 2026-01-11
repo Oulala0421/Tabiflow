@@ -312,11 +312,9 @@ export default function App() {
          accommodationInfo = data.accommodation;
       }
 
-      let summaryText = data.memo || "";
-      if (!summaryText) {
-         if (type === 'transport') summaryText = `預計搭乘 ${data.transportMode} 前往 ${data.title}`;
-         else if (type === 'stay') summaryText = "住宿行程";
-      }
+      let summaryText = data.summary || data.memo || "";
+      // Remove default AI summary generation to prevent duplication
+
 
       if (data.websiteUrl && !summaryText.includes(data.websiteUrl)) {
           summaryText += `\n🔗 網站: ${data.websiteUrl}`;

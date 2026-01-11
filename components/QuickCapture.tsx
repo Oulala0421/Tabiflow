@@ -110,7 +110,7 @@ export const QuickCapture = ({
         setIsBreakfastIncluded(false);
         setIsDinnerIncluded(false);
     }
-  }, [isOpen, initialData]);
+  }, [initialData]);
 
 
   const titleInputRef = useRef<HTMLInputElement>(null);

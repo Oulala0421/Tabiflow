@@ -41,7 +41,7 @@ export const INITIAL_DATA: ExtendedItineraryItem[] = [
     categories: ["咖啡廳", "早午餐"],
     mapsUrl: "https://goo.gl/maps/example",
     date: getRelativeDate(0), // Today
-    coverImage: "",
+    coverImage: MOCK_IMAGES.cafe,
     summary: "以淺焙咖啡和復古家具聞名。必點挪威鬆餅，早上去氣氛最好。",
     lastEdited: new Date().toISOString(),
     cost: 1500,
@@ -73,7 +73,7 @@ export const INITIAL_DATA: ExtendedItineraryItem[] = [
     categories: ["展覽"],
     mapsUrl: "",
     date: "",
-    coverImage: "",
+    coverImage: MOCK_IMAGES.night,
     summary: "想去但還沒決定哪天，記得要先買票。",
     lastEdited: new Date().toISOString(),
     cost: 3200,
@@ -89,7 +89,7 @@ export const INITIAL_DATA: ExtendedItineraryItem[] = [
     categories: ["電車"],
     mapsUrl: "",
     date: getRelativeDate(1), // Tomorrow
-    coverImage: "",
+    coverImage: MOCK_IMAGES.train,
     summary: "搭乘山手線外回線，注意避開車頭車尾人潮。",
     lastEdited: new Date().toISOString(),
     transport: {

@@ -225,13 +225,51 @@ export default function App() {
       setEditingItem(null);
       setIsQuickCaptureOpen(false);
 
-      // 🛑 [Fix 1] 攔截 AI 模式
-      // 如果是 AI 模式，QuickCapture 內部已經呼叫過 API 了，這裡不需要再做任何 API 請求
-      // 只要觸發資料重整即可
-      if (data.type === 'ai') {
-        addToast("AI 分析請求已送出，正在處理中...", 'success');
-        fetchItems(); // 重新抓取資料
-        return;       // 直接結束，不往下執行
+      setEditingItem(null);
+      setIsQuickCaptureOpen(false);
+
+      // AI Mode Handling
+      if (data.type === 'ai_pending') {
+         addToast("AI 分析請求已送出，正在建立頁面...", 'success');
+         
+         const payload = {
+             url: data.url,
+             title: "AI Analyzing...",
+             status: data.status, // Inbox or Scheduled
+             date: data.date,
+             time: data.time || "TBD",
+             aiProcessing: "Processing", // Mark as initial processing state
+             summary: data.summary // Context
+         };
+
+         try {
+             // 1. Create Page
+             const res = await fetch('/api/inbox', {
+                 method: 'POST',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify(payload)
+             });
+             
+             if (!res.ok) throw new Error('Create page failed');
+             const { id } = await res.json();
+             
+             // 2. Trigger Analysis immediately (don't wait for poll)
+             fetch('/api/analyze', {
+                 method: 'POST',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify({ pageId: id })
+             }).then(() => {
+                 fetchItems(); // Refresh again after analysis returns (optional/optimistic)
+             });
+
+             // 3. Initial Refresh to show the "Processing" card
+             fetchItems();
+
+         } catch (e) {
+             console.error(e);
+             addToast("AI 請求失敗", 'danger');
+         }
+         return;
       }
 
       // FORCE SWITCH to the target date

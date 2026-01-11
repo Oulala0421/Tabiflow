@@ -161,32 +161,28 @@ export const QuickCapture = ({
         const payload: any = { 
           // If editing, preserve ID, otherwise handleSaveItem will generate one
           id: initialData?.id,
-          title, 
-          // If user set a date, force status to Scheduled (unless they explicitly cleared it via inbox toggle, which we handled by clearing date state)
-          // Actually, let's rely on: If date is present -> Scheduled. If no date -> Inbox.
-          // [Fix] Priority: isInboxMode toggled manually supersedes date value presence if conflicting (e.g. user toggled inbox but date remains in state)
-          // But our toggle clears date state. So (!date) check is likely safe IF toggle works correctly.
-          // However, to be extra safe as per user request:
-          date: (isInboxMode) ? "" : date, 
-          time: (isInboxMode || !date) ? "TBD" : (time || "待定"), 
-          area: area || "待定", 
-          type: 'manual',
-          selectedType: selectedType,
-          status: (isInboxMode || !date) ? 'Inbox' : (initialData?.status === 'Done' ? 'Done' : 'Scheduled'), 
-          // Advanced Fields
+          title,
+          date: isInboxMode ? undefined : date,
+          time: isInboxMode ? "TBD" : (time || "TBD"),
+          area: area,
+          selectedType,
+          status: isInboxMode ? 'Inbox' : (initialData?.status || 'Scheduled'),
+          // Use advanced values if present
           mapsUrl: advancedMapUrl,
-          websiteUrl: advancedWebUrl,
-          memo: advancedMemo,
-          cost: cost ? Number(cost) : 0,
-          currency: 'JPY'
+          cost: money ? parseInt(money) : undefined
         };
 
-        if (selectedType === 'transport') {
-             payload.transportMode = transportMode;
-             payload.transportPlatform = platform;
-             payload.transportCar = car;
-        }
+        if (advancedWebUrl) payload.url = advancedWebUrl;
+        if (advancedMemo) payload.summary = advancedMemo; // Override simple memo if advanced used
 
+        if (initialData) payload.id = initialData.id;
+
+        if (selectedType === 'transport') {
+            payload.transportMode = transportMode;
+            payload.transportPlatform = platform;
+            payload.transportCar = car;
+            payload.transportSeat = seat;
+        }    
         if (selectedType === 'stay') {
             payload.accommodation = {
                 checkIn: checkIn || "15:00",
@@ -277,20 +273,17 @@ export const QuickCapture = ({
                 <Type size={16} />
                 手動輸入
             </button>
-            <div className="relative group">
-                <button 
-                    disabled
-                    className="pb-3 px-6 text-sm font-bold uppercase tracking-wider border-b-2 border-transparent text-zinc-700 cursor-not-allowed gap-2 flex items-center relative"
-                >
-                    <Sparkles size={16} />
-                    AI 連結
-                </button>
-                <div className="absolute inset-0 flex items-center justify-center bg-zinc-950/80 backdrop-blur-[1px] rounded-sm border border-zinc-800/50">
-                     <span className="text-[10px] font-bold text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded-full border border-yellow-500/20">
-                        功能維護中
-                     </span>
-                </div>
-            </div>
+            <button 
+                onClick={() => setActiveTab('ai')}
+                className={`pb-3 px-6 text-sm font-bold uppercase tracking-wider border-b-2 transition-all gap-2 flex items-center ${
+                activeTab === 'ai' 
+                    ? 'text-white border-white' 
+                    : 'text-zinc-600 border-transparent hover:text-zinc-400'
+                }`}
+            >
+                <Sparkles size={16} />
+                AI 連結
+            </button>
             </div>
         )}
 

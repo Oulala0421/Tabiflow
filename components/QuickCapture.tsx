@@ -231,7 +231,10 @@ export const QuickCapture = ({
   };
 
   const getPlaceholder = () => {
-    if (selectedType === 'transport') return "目的地 (例如：新宿)";
+    if (selectedType === 'transport') {
+        if (transportMode.includes("飛機")) return "抵達機場 (例如：成田機場)";
+        return "目的地 (例如：新宿)";
+    }
     if (selectedType === 'stay') return "飯店名稱";
     return "想去哪裡？";
   };
@@ -666,7 +669,11 @@ export const QuickCapture = ({
                   type="text"
                   value={area}
                   onChange={(e) => setArea(e.target.value)}
-                  placeholder={selectedType === 'transport' ? "出發地 (選填)" : "地區 (選填)"}
+                  placeholder={
+                      selectedType === 'transport' 
+                        ? (transportMode.includes("飛機") ? "出發機場 (例如：桃園機場)" : "出發地 (選填)") 
+                        : "地區 (選填)"
+                  }
                   className="bg-transparent text-white w-full outline-none font-mono text-sm placeholder:text-zinc-700"
                 />
             </div>

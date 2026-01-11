@@ -47,6 +47,9 @@ export const QuickCapture = ({
   const [platform, setPlatform] = useState("");
   const [car, setCar] = useState("");
   const [seat, setSeat] = useState("");
+  const [terminal, setTerminal] = useState("");
+  const [gate, setGate] = useState("");
+  const [flightNumber, setFlightNumber] = useState("");
 
   // Accommodation Fields
   const [checkIn, setCheckIn] = useState("15:00");
@@ -74,6 +77,9 @@ export const QuickCapture = ({
             setPlatform(initialData.transport.platform || "");
             setCar(initialData.transport.car || "");
             setSeat(initialData.transport.seat || "");
+            setTerminal(initialData.transport.terminal || "");
+            setGate(initialData.transport.gate || "");
+            setFlightNumber(initialData.transport.flightNumber || "");
         }
 
         // Handle Accommodation
@@ -104,8 +110,11 @@ export const QuickCapture = ({
         setPlatform("");
         setCar("");
         setSeat("");
-        setCheckIn("11:00");
-        setCheckOut("15:00");
+        setTerminal("");
+        setGate("");
+        setFlightNumber("");
+        setCheckIn("15:00");
+        setCheckOut("11:00");
         setFacilities("");
         setIsBreakfastIncluded(false);
         setIsDinnerIncluded(false);
@@ -136,10 +145,10 @@ export const QuickCapture = ({
     { label: "電車", icon: TrainFront },
     { label: "地鐵", icon: TrainFront },
     { label: "新幹線", icon: TrainFront },
+    { label: "飛機", icon: Plane },
     { label: "公車", icon: Bus },
     { label: "計程車", icon: Car },
     { label: "步行", icon: Footprints },
-    { label: "飛機", icon: Plane },
   ];
 
   useEffect(() => {
@@ -182,6 +191,9 @@ export const QuickCapture = ({
             payload.transportPlatform = platform;
             payload.transportCar = car;
             payload.transportSeat = seat;
+            payload.transportTerminal = terminal;
+            payload.transportGate = gate;
+            payload.transportFlightNumber = flightNumber;
         }    
         if (selectedType === 'stay') {
             payload.accommodation = {
@@ -233,7 +245,7 @@ export const QuickCapture = ({
     >
       <button 
         onClick={onClose}
-        className="absolute top-6 right-6 text-zinc-500 hover:text-white transition-colors"
+        className="absolute top-6 right-6 text-zinc-500 hover:text-white transition-colors z-50"
       >
         <X size={32} strokeWidth={1.5} />
       </button>
@@ -344,36 +356,81 @@ export const QuickCapture = ({
                         />
                      </div>
                      
-                     {/* Platform / Car / Seat Inputs */}
-                     <div className="grid grid-cols-3 gap-2">
-                        <div className="bg-zinc-900/50 border border-zinc-800 rounded-sm p-2 flex items-center gap-2">
-                           <span className="text-zinc-600 text-xs whitespace-nowrap">月台</span>
-                           <input
-                             value={platform}
-                             onChange={(e) => setPlatform(e.target.value)}
-                             placeholder="-"
-                             className="bg-transparent text-white w-full outline-none font-mono text-xs text-center"
-                           />
-                        </div>
-                        <div className="bg-zinc-900/50 border border-zinc-800 rounded-sm p-2 flex items-center gap-2">
-                           <span className="text-zinc-600 text-xs whitespace-nowrap">車廂</span>
-                           <input
-                             value={car}
-                             onChange={(e) => setCar(e.target.value)}
-                             placeholder="-"
-                             className="bg-transparent text-white w-full outline-none font-mono text-xs text-center"
-                           />
-                        </div>
-                        <div className="bg-zinc-900/50 border border-zinc-800 rounded-sm p-2 flex items-center gap-2">
-                           <span className="text-zinc-600 text-xs whitespace-nowrap">座位</span>
-                           <input
-                             value={seat}
-                             onChange={(e) => setSeat(e.target.value)}
-                             placeholder="-"
-                             className="bg-transparent text-white w-full outline-none font-mono text-xs text-center"
-                           />
-                        </div>
-                     </div>
+                      {/* Dynamic Inputs based on Transport Mode */}
+                      {transportMode.includes("飛機") ? (
+                          // Flight Inputs
+                          <div className="grid grid-cols-2 gap-2">
+                             <div className="bg-zinc-900/50 border border-zinc-800 rounded-sm p-2 flex items-center gap-2">
+                                <span className="text-zinc-600 text-xs whitespace-nowrap">班機</span>
+                                <input
+                                  value={flightNumber}
+                                  onChange={(e) => setFlightNumber(e.target.value)}
+                                  placeholder="JX800"
+                                  className="bg-transparent text-white w-full outline-none font-mono text-xs text-center"
+                                />
+                             </div>
+                             <div className="bg-zinc-900/50 border border-zinc-800 rounded-sm p-2 flex items-center gap-2">
+                                <span className="text-zinc-600 text-xs whitespace-nowrap">座位</span>
+                                <input
+                                  value={seat}
+                                  onChange={(e) => setSeat(e.target.value)}
+                                  placeholder="12A"
+                                  className="bg-transparent text-white w-full outline-none font-mono text-xs text-center"
+                                />
+                             </div>
+                             <div className="bg-zinc-900/50 border border-zinc-800 rounded-sm p-2 flex items-center gap-2">
+                                <span className="text-zinc-600 text-xs whitespace-nowrap">航廈</span>
+                                <input
+                                  value={terminal}
+                                  onChange={(e) => setTerminal(e.target.value)}
+                                  placeholder="T1"
+                                  className="bg-transparent text-white w-full outline-none font-mono text-xs text-center"
+                                />
+                             </div>
+                             <div className="bg-zinc-900/50 border border-zinc-800 rounded-sm p-2 flex items-center gap-2">
+                                <span className="text-zinc-600 text-xs whitespace-nowrap">登機門</span>
+                                <input
+                                  value={gate}
+                                  onChange={(e) => setGate(e.target.value)}
+                                  placeholder="B5"
+                                  className="bg-transparent text-white w-full outline-none font-mono text-xs text-center"
+                                />
+                             </div>
+                          </div>
+                      ) : (
+                          // Train Inputs (Hidden for Simple Modes)
+                          !["公車", "計程車", "步行"].some(m => transportMode.includes(m)) && (
+                              <div className="grid grid-cols-3 gap-2">
+                                <div className="bg-zinc-900/50 border border-zinc-800 rounded-sm p-2 flex items-center gap-2">
+                                   <span className="text-zinc-600 text-xs whitespace-nowrap">月台</span>
+                                   <input
+                                     value={platform}
+                                     onChange={(e) => setPlatform(e.target.value)}
+                                     placeholder="-"
+                                     className="bg-transparent text-white w-full outline-none font-mono text-xs text-center"
+                                   />
+                                </div>
+                                <div className="bg-zinc-900/50 border border-zinc-800 rounded-sm p-2 flex items-center gap-2">
+                                   <span className="text-zinc-600 text-xs whitespace-nowrap">車廂</span>
+                                   <input
+                                     value={car}
+                                     onChange={(e) => setCar(e.target.value)}
+                                     placeholder="-"
+                                     className="bg-transparent text-white w-full outline-none font-mono text-xs text-center"
+                                   />
+                                </div>
+                                <div className="bg-zinc-900/50 border border-zinc-800 rounded-sm p-2 flex items-center gap-2">
+                                   <span className="text-zinc-600 text-xs whitespace-nowrap">座位</span>
+                                   <input
+                                     value={seat}
+                                     onChange={(e) => setSeat(e.target.value)}
+                                     placeholder="-"
+                                     className="bg-transparent text-white w-full outline-none font-mono text-xs text-center"
+                                   />
+                                </div>
+                              </div>
+                          )
+                      )}
                      
                      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
                         {TRANSPORT_MODES.map((mode) => (

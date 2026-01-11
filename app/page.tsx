@@ -255,7 +255,10 @@ export default function App() {
            platform: data.transportPlatform || "-",
            car: data.transportCar || "-",
            seat: data.transportSeat || "自由座",
-           duration: "-" 
+           duration: "-",
+           terminal: data.transportTerminal,
+           gate: data.transportGate,
+           flightNumber: data.transportFlightNumber 
         };
       } else if (type === 'stay') {
          accommodationInfo = data.accommodation;

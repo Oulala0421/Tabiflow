@@ -10,6 +10,9 @@ export interface TransportInfo {
   car?: string;
   seat?: string;
   duration?: string;
+  terminal?: string;    // 航廈
+  gate?: string;        // 登機門
+  flightNumber?: string; // 班機號碼
 }
 
 export interface AccommodationInfo {

@@ -35,6 +35,7 @@ interface TimelineViewProps {
   items: ExtendedItineraryItem[];
   onSelectItem: (item: ExtendedItineraryItem) => void;
   selectedDate: string; // Context for multi-day items
+  currency: 'JPY' | 'TWD';
 }
 
 export const TimelineView = ({ 
@@ -42,7 +43,8 @@ export const TimelineView = ({
   heroItem, 
   items, 
   onSelectItem,
-  selectedDate
+  selectedDate,
+  currency
 }: TimelineViewProps) => {
 
   if (isLoading) {
@@ -162,6 +164,7 @@ export const TimelineView = ({
                 prevItem={items[index - 1]}
                 onClick={onSelectItem}
                 contextDate={selectedDate}
+                currency={currency}
             />
         ))}
         </motion.div>

@@ -13,13 +13,15 @@ export const DetailSheet = ({
     onClose,
     onStatusChange,
     onEdit,
-    onDelete
+    onDelete,
+    currency = 'JPY'
 }: { 
     item: ExtendedItineraryItem, 
     onClose: () => void,
     onStatusChange: (id: string, newStatus: ItineraryStatus) => void,
     onEdit: (item: ExtendedItineraryItem) => void,
-    onDelete: (id: string) => void
+    onDelete: (id: string) => void,
+    currency?: 'JPY' | 'TWD'
 }) => {
   const [isStatusPickerOpen, setIsStatusPickerOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
@@ -154,12 +156,22 @@ export const DetailSheet = ({
                     </div>
                     <div>
                         <div className="text-xs text-zinc-500 uppercase tracking-wider">預估開銷</div>
-                        <div className="text-white font-bold">{item.cost ? `¥${item.cost.toLocaleString()}` : "免費"}</div>
+                        <div className="text-white font-bold">
+                            {item.cost && item.cost > 0 
+                                ? (currency === 'JPY' 
+                                    ? `¥${item.cost.toLocaleString()}` 
+                                    : `NT$${Math.round(item.cost / 5).toLocaleString()}`)
+                                : "免費"
+                            }
+                        </div>
                     </div>
                 </div>
                 {item.cost && item.cost > 0 && (
                     <span className="text-xs text-zinc-600 font-mono">
-                         ≈ TWD {Math.round(item.cost * 0.22).toLocaleString()}
+                         ≈ {currency === 'JPY' 
+                             ? `TWD ${Math.round(item.cost / 5).toLocaleString()}` 
+                             : `JPY ${item.cost.toLocaleString()}`
+                           }
                     </span>
                 )}
              </div>

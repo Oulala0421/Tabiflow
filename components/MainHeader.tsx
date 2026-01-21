@@ -12,6 +12,8 @@ interface MainHeaderProps {
   items: ExtendedItineraryItem[];
   selectedDate: string;
   setSelectedDate: (date: string) => void;
+  currency: 'JPY' | 'TWD';
+  onToggleCurrency: () => void;
 }
 
 export const MainHeader = ({
@@ -22,7 +24,9 @@ export const MainHeader = ({
   onSettingsClick,
   items,
   selectedDate,
-  setSelectedDate
+  setSelectedDate,
+  currency,
+  onToggleCurrency
 }: MainHeaderProps) => {
   return (
     <header className="sticky top-0 z-30 bg-zinc-950/90 backdrop-blur-md border-b border-zinc-900 transition-all">
@@ -57,10 +61,18 @@ export const MainHeader = ({
 
         <div className="flex items-center gap-3">
           {viewMode === 'timeline' && (
-              <div className="flex items-center gap-1.5 text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded border border-yellow-500/20">
+              <button 
+                  onClick={onToggleCurrency}
+                  className="flex items-center gap-1.5 text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded border border-yellow-500/20 active:scale-95 transition-transform"
+              >
                   <Wallet size={14} />
-                  <span className="text-xs font-mono font-bold">¥{dailyCost.toLocaleString()}</span>
-              </div>
+                  <span className="text-xs font-mono font-bold">
+                    {currency === 'JPY' 
+                        ? `¥${dailyCost.toLocaleString()}` 
+                        : `NT$${Math.round(dailyCost / 5).toLocaleString()}`
+                    }
+                  </span>
+              </button>
           )}
           
           <button 

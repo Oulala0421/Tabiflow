@@ -16,9 +16,10 @@ interface ItineraryCardProps {
     prevItem?: ExtendedItineraryItem;
     onClick: (item: ExtendedItineraryItem) => void;
     contextDate?: string;
+    currency?: 'JPY' | 'TWD';
 }
 
-export const ItineraryCard = ({ item, prevItem, onClick, contextDate }: ItineraryCardProps) => {
+export const ItineraryCard = ({ item, prevItem, onClick, contextDate, currency = 'JPY' }: ItineraryCardProps) => {
     // Multi-day Logic
     const isStay = item.type === 'stay';
     const isCheckIn = isStay && (!contextDate || item.date === contextDate);
@@ -116,7 +117,12 @@ export const ItineraryCard = ({ item, prevItem, onClick, contextDate }: Itinerar
                 <div className="flex justify-between items-start">
                     <h3 className={`font-medium text-base transition-colors ${item.status === 'Done' ? 'text-zinc-500 line-through' : 'text-zinc-200 group-hover:text-white'}`}>{displayTitle}</h3>
                     {item.cost && item.cost > 0 && (
-                        <span className="text-[10px] font-mono text-zinc-600 mt-1">¥{item.cost.toLocaleString()}</span>
+                        <span className="text-[10px] font-mono text-zinc-600 mt-1">
+                            {currency === 'JPY' 
+                                ? `¥${item.cost.toLocaleString()}`
+                                : `NT$${Math.round(item.cost / 5).toLocaleString()}`
+                            }
+                        </span>
                     )}
                 </div>
 

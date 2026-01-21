@@ -63,6 +63,10 @@ export default function App() {
   // Current time state
   const [now, setNow] = useState(new Date());
 
+  // Currency State
+  const [currency, setCurrency] = useState<'JPY' | 'TWD'>('JPY');
+  const toggleCurrency = () => setCurrency(prev => prev === 'JPY' ? 'TWD' : 'JPY');
+
   // Update time every 30 seconds to keep UI fresh
   useEffect(() => {
     setNow(new Date());
@@ -417,6 +421,8 @@ export default function App() {
         items={items}
         selectedDate={selectedDate}
         setSelectedDate={setSelectedDate}
+        currency={currency}
+        onToggleCurrency={toggleCurrency}
       />
 
       {/* Main Content Stream */}
@@ -429,6 +435,7 @@ export default function App() {
               items={displayTimelineItems}
               onSelectItem={setSelectedItem}
               selectedDate={selectedDate} // Pass context
+              currency={currency}
            />
         ) : (
             <InboxView 
@@ -472,6 +479,7 @@ export default function App() {
             onStatusChange={handleStatusChange}
             onEdit={handleEditClick}
             onDelete={handleDeleteItem}
+            currency={currency}
           />
         )}
         

@@ -62,6 +62,34 @@ export const TimelineView = ({
     );
   }
 
+  
+  // Helper for Hero Item Display Logic (Similar to ItineraryCard)
+  const getHeroDisplay = () => {
+      if (!heroItem) return null;
+
+      const isStay = heroItem.type === 'stay';
+      const isCheckIn = isStay && (!selectedDate || heroItem.date === selectedDate);
+      const isCheckOut = isStay && (selectedDate && heroItem.endDate === selectedDate);
+      const isStayOver = isStay && (selectedDate && !isCheckIn && !isCheckOut);
+
+      let displayTime = heroItem.time;
+      let displayTitle = heroItem.title;
+
+      if (isCheckIn) {
+          displayTime = heroItem.accommodation?.checkIn || heroItem.time || "15:00";
+      } else if (isCheckOut) {
+          displayTime = heroItem.accommodation?.checkOut || "11:00";
+          displayTitle = `退房: ${heroItem.title}`;
+      } else if (isStayOver) {
+          displayTime = "全日";
+          displayTitle = `續住: ${heroItem.title}`;
+      }
+
+      return { displayTime, displayTitle };
+  };
+
+  const heroDisplay = getHeroDisplay();
+
   return (
       <>
         {/* Hero Card (Next Up) */}
@@ -97,7 +125,7 @@ export const TimelineView = ({
             <div className="max-w-[70%]">
                 <div className="flex items-center gap-2 mb-1">
                 <span className="bg-white text-black text-xs font-bold px-1.5 py-0.5 rounded-sm font-mono">
-                    {heroItem.time}
+                    {heroDisplay?.displayTime || heroItem.time}
                 </span>
                 <span className="text-zinc-300 text-xs font-mono uppercase tracking-wider truncate">
                     {heroItem.area}
@@ -108,7 +136,7 @@ export const TimelineView = ({
                     </span>
                 )}
                 </div>
-                <h2 className="text-2xl font-bold text-white leading-tight line-clamp-2">{heroItem.title}</h2>
+                <h2 className="text-2xl font-bold text-white leading-tight line-clamp-2">{heroDisplay?.displayTitle || heroItem.title}</h2>
             </div>
             </div>
         </motion.div>

@@ -51,6 +51,7 @@ export const QuickCapture = ({
   const [terminal, setTerminal] = useState("");
   const [gate, setGate] = useState("");
   const [flightNumber, setFlightNumber] = useState("");
+  const [arrivalTime, setArrivalTime] = useState("");
 
   // Accommodation Fields
   const [checkIn, setCheckIn] = useState("15:00");
@@ -92,6 +93,7 @@ export const QuickCapture = ({
             setTerminal(initialData.transport.terminal || "");
             setGate(initialData.transport.gate || "");
             setFlightNumber(initialData.transport.flightNumber || "");
+            setArrivalTime(initialData.transport.arrival || "");
         }
 
         // Handle Accommodation
@@ -125,6 +127,7 @@ export const QuickCapture = ({
         setTerminal("");
         setGate("");
         setFlightNumber("");
+        setArrivalTime("");
         // Default endDate for stay (next day of defaultDate)
         const d = new Date(defaultDate);
         d.setDate(d.getDate() + 1);
@@ -214,6 +217,7 @@ export const QuickCapture = ({
             payload.transportTerminal = terminal;
             payload.transportGate = gate;
             payload.transportFlightNumber = flightNumber;
+            payload.transportArrival = arrivalTime;
         }    
         if (selectedType === 'stay') {
             payload.accommodation = {
@@ -393,6 +397,15 @@ export const QuickCapture = ({
                                 />
                              </div>
                              <div className="bg-zinc-900/50 border border-zinc-800 rounded-sm p-2 flex items-center gap-2">
+                                <span className="text-zinc-600 text-xs whitespace-nowrap">抵達</span>
+                                <input
+                                  type="time"
+                                  value={arrivalTime}
+                                  onChange={(e) => setArrivalTime(e.target.value)}
+                                  className="bg-transparent text-white w-full outline-none font-mono text-xs text-center"
+                                />
+                             </div>
+                             <div className="bg-zinc-900/50 border border-zinc-800 rounded-sm p-2 flex items-center gap-2">
                                 <span className="text-zinc-600 text-xs whitespace-nowrap">座位</span>
                                 <input
                                   value={seat}
@@ -420,9 +433,20 @@ export const QuickCapture = ({
                                 />
                              </div>
                           </div>
+                      ) : transportMode.includes("計程車") ? (
+                          // Taxi Inputs
+                          <div className="bg-zinc-900/50 border border-zinc-800 rounded-sm p-2 flex items-center gap-2">
+                                <span className="text-zinc-600 text-xs whitespace-nowrap">抵達時間</span>
+                                <input
+                                  type="time"
+                                  value={arrivalTime}
+                                  onChange={(e) => setArrivalTime(e.target.value)}
+                                  className="bg-transparent text-white w-full outline-none font-mono text-xs text-center"
+                                />
+                           </div>
                       ) : (
                           // Train Inputs (Hidden for Simple Modes)
-                          !["公車", "計程車", "步行"].some(m => transportMode.includes(m)) && (
+                          !["公車", "步行"].some(m => transportMode.includes(m)) && (
                               <div className="grid grid-cols-3 gap-2">
                                 <div className="bg-zinc-900/50 border border-zinc-800 rounded-sm p-2 flex items-center gap-2">
                                    <span className="text-zinc-600 text-xs whitespace-nowrap">月台</span>

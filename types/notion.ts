@@ -13,6 +13,7 @@ export interface TransportInfo {
   terminal?: string;    // 航廈
   gate?: string;        // 登機門
   flightNumber?: string; // 班機號碼
+  arrival?: string;     // 抵達時間 (HH:mm)
 }
 
 export interface AccommodationInfo {

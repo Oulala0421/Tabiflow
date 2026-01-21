@@ -312,7 +312,8 @@ export default function App() {
            duration: "-",
            terminal: data.transportTerminal,
            gate: data.transportGate,
-           flightNumber: data.transportFlightNumber 
+           flightNumber: data.transportFlightNumber,
+           arrival: data.transportArrival
         };
       } else if (type === 'stay') {
          accommodationInfo = data.accommodation;

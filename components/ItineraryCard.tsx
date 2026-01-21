@@ -158,6 +158,12 @@ export const ItineraryCard = ({ item, prevItem, onClick, contextDate, currency =
                                             {item.transport.flightNumber}
                                         </span>
                                     )}
+                                    {item.transport.arrival && (
+                                         <span className="text-[9px] font-mono px-1.5 py-0.5 bg-indigo-900/30 text-indigo-300 rounded border border-indigo-500/30 flex items-center gap-1 whitespace-nowrap">
+                                            <span className="w-1 h-1 rounded-full bg-indigo-500" />
+                                            抵達 {item.transport.arrival}
+                                         </span>
+                                     )}
                                     {(item.transport.terminal) && (
                                         <span className="text-[9px] font-mono px-1.5 py-0.5 bg-zinc-800 rounded text-zinc-300 border border-zinc-700 whitespace-nowrap">
                                             航廈 {item.transport.terminal}
@@ -181,6 +187,12 @@ export const ItineraryCard = ({ item, prevItem, onClick, contextDate, currency =
                                             {item.transport.car} 號車
                                         </span>
                                     )}
+                                     {item.transport.arrival && (
+                                         <span className="text-[9px] font-mono px-1.5 py-0.5 bg-indigo-900/30 text-indigo-300 rounded border border-indigo-500/30 flex items-center gap-1 whitespace-nowrap">
+                                            <span className="w-1 h-1 rounded-full bg-indigo-500" />
+                                            抵達 {item.transport.arrival}
+                                         </span>
+                                     )}
                                 </>
                             )}
 

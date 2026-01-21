@@ -244,7 +244,9 @@ export const DetailSheet = ({
                       <div className="text-xl font-bold text-white">{item.transport.from}</div>
                     </div>
                     <div className="flex flex-col items-center px-4">
-                       <span className="text-zinc-600 text-[10px] mb-1">{item.transport.duration}</span>
+                       <span className="text-zinc-600 text-[10px] mb-1">
+                           {item.transport.arrival ? `抵達 ${item.transport.arrival}` : item.transport.duration}
+                       </span>
                        <ArrowRight className="text-indigo-400" size={20} />
                     </div>
                     <div className="flex-1 text-right">

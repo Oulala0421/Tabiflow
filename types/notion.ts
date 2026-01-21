@@ -28,6 +28,7 @@ export interface ItineraryItem {
   id: string;
   title: string;
   date: string; // ISO Date String (YYYY-MM-DD)
+  endDate?: string; // ISO Date String (YYYY-MM-DD) for multi-day items
   time: string; // Extracted time (HH:mm) or "TBD"
   status: ItineraryStatus;
   area: string;
@@ -53,7 +54,7 @@ export interface NotionPage {
   id: string;
   properties: {
     "地點名稱": { title: { plain_text: string }[] };
-    "日期": { date: { start: string } | null };
+    "日期": { date: { start: string; end?: string | null } | null };
     "處理狀態": { status: { name: string } | null };
     "區域": { rich_text: { plain_text: string }[] };
     "類別": { multi_select: { name: string }[] };

@@ -24,6 +24,7 @@ export const QuickCapture = ({
   // Form State
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(defaultDate);
+  const [endDate, setEndDate] = useState("");
   const [time, setTime] = useState("");
   const [area, setArea] = useState("");
   const [selectedType, setSelectedType] = useState<ItineraryType>('activity');
@@ -62,6 +63,17 @@ export const QuickCapture = ({
   useEffect(() => {
     if (initialData) {
         setTitle(initialData.title.replace(/^前往 /, "")); // Clean up transport titles
+        if (initialData.type === 'stay' && initialData.endDate) {
+            setEndDate(initialData.endDate);
+        } else if (initialData.type === 'stay') {
+            // Default to next day if not set
+            const d = new Date(initialData.date);
+            d.setDate(d.getDate() + 1);
+            setEndDate(d.toISOString().split('T')[0]);
+        } else {
+            setEndDate("");
+        }
+
         setDate(initialData.date);
         setTime(initialData.time === "TBD" ? "" : initialData.time);
         setArea(initialData.area === "交通" ? "" : initialData.area);
@@ -113,6 +125,11 @@ export const QuickCapture = ({
         setTerminal("");
         setGate("");
         setFlightNumber("");
+        // Default endDate for stay (next day of defaultDate)
+        const d = new Date(defaultDate);
+        d.setDate(d.getDate() + 1);
+        setEndDate(d.toISOString().split('T')[0]);
+        
         setCheckIn("15:00");
         setCheckOut("11:00");
         setFacilities("");
@@ -125,7 +142,9 @@ export const QuickCapture = ({
   const titleInputRef = useRef<HTMLInputElement>(null);
   const urlInputRef = useRef<HTMLInputElement>(null);
   const areaInputRef = useRef<HTMLInputElement>(null);
+  const areaInputRef = useRef<HTMLInputElement>(null);
   const dateInputRef = useRef<HTMLInputElement>(null);
+  const endDateInputRef = useRef<HTMLInputElement>(null);
   const timeInputRef = useRef<HTMLInputElement>(null);
   const facilitiesInputRef = useRef<HTMLInputElement>(null);
   const mapUrlInputRef = useRef<HTMLInputElement>(null);
@@ -172,6 +191,7 @@ export const QuickCapture = ({
           id: initialData?.id,
           title,
           date: isInboxMode ? undefined : date,
+          endDate: (selectedType === 'stay' && !isInboxMode) ? endDate : undefined,
           time: isInboxMode ? "TBD" : (time || "TBD"),
           area: area,
           selectedType,
@@ -596,65 +616,109 @@ export const QuickCapture = ({
 
           {/* Shared Fields: Date & Time & Area */}
           <div className="space-y-3">
-             {/* Row 1: Date & Time */}
+             {/* Row 1: Date & Time (Conditional for Stay) */}
              <div className="flex gap-4">
-                <div 
-                   onClick={() => {
-                        // If inbox mode, allow clicking to enable
-                        if (isInboxMode) {
-                            // setIsInboxMode(false); // Don't force false immediately, let user pick
-                            // Actually we need to allow picker.
-                        }
-                        
-                        // Open picker
-                        setTimeout(() => {
-                             try {
-                                dateInputRef.current?.showPicker();
-                            } catch (err) {
-                                dateInputRef.current?.focus();
-                            }
-                        }, 50);
-                   }}
-                   className={`flex-1 bg-zinc-900/50 border border-zinc-800 rounded-sm p-3 flex items-center gap-3 focus-within:border-zinc-600 transition-colors cursor-pointer ${isInboxMode ? 'opacity-70' : ''}`}
-                >
-                   <Calendar size={16} className="text-zinc-500 shrink-0" />
-                   <input
-                     ref={dateInputRef}
-                     type="date"
-                     value={date}
-                     onChange={(e) => {
-                         setDate(e.target.value);
-                         if(e.target.value) setIsInboxMode(false);
-                     }}
-                     className="bg-transparent text-white w-full outline-none font-mono text-sm cursor-pointer"
-                   />
-                </div>
+                {selectedType === 'stay' ? (
+                     // Stay: Check-in Date + Check-out Date
+                    <>
+                        <div 
+                           onClick={() => dateInputRef.current?.showPicker()}
+                           className={`flex-1 bg-zinc-900/50 border border-zinc-800 rounded-sm p-3 flex items-center gap-3 focus-within:border-zinc-600 transition-colors cursor-pointer`}
+                        >
+                           <Calendar size={16} className="text-zinc-500 shrink-0" />
+                           <div className="w-full">
+                               <label className="text-[10px] text-zinc-500 uppercase block leading-none mb-1">入住</label>
+                               <input
+                                 ref={dateInputRef}
+                                 type="date"
+                                 value={date}
+                                 onChange={(e) => {
+                                     setDate(e.target.value);
+                                     // Auto-update checkout if before checkin
+                                     if(endDate && e.target.value >= endDate) {
+                                         const d = new Date(e.target.value);
+                                         d.setDate(d.getDate() + 1);
+                                         setEndDate(d.toISOString().split('T')[0]);
+                                     }
+                                 }}
+                                 className="bg-transparent text-white w-full outline-none font-mono text-sm cursor-pointer"
+                               />
+                           </div>
+                        </div>
+
+                        <div 
+                           onClick={() => endDateInputRef.current?.showPicker()}
+                           className={`flex-1 bg-zinc-900/50 border border-zinc-800 rounded-sm p-3 flex items-center gap-3 focus-within:border-zinc-600 transition-colors cursor-pointer`}
+                        >
+                           <Calendar size={16} className="text-zinc-500 shrink-0" />
+                           <div className="w-full">
+                               <label className="text-[10px] text-zinc-500 uppercase block leading-none mb-1">退房</label>
+                               <input
+                                 ref={endDateInputRef}
+                                 type="date"
+                                 value={endDate}
+                                 onChange={(e) => setEndDate(e.target.value)}
+                                 className="bg-transparent text-white w-full outline-none font-mono text-sm cursor-pointer"
+                               />
+                           </div>
+                        </div>
+                    </>
+                ) : (
+                    // Default: Single Date Input
+                    <div 
+                       onClick={() => {
+                            setTimeout(() => {
+                                 try {
+                                    dateInputRef.current?.showPicker();
+                                } catch (err) {
+                                    dateInputRef.current?.focus();
+                                }
+                            }, 50);
+                       }}
+                       className={`flex-1 bg-zinc-900/50 border border-zinc-800 rounded-sm p-3 flex items-center gap-3 focus-within:border-zinc-600 transition-colors cursor-pointer ${isInboxMode ? 'opacity-70' : ''}`}
+                    >
+                       <Calendar size={16} className="text-zinc-500 shrink-0" />
+                       <input
+                         ref={dateInputRef}
+                         type="date"
+                         value={date}
+                         onChange={(e) => {
+                             setDate(e.target.value);
+                             if(e.target.value) setIsInboxMode(false);
+                         }}
+                         className="bg-transparent text-white w-full outline-none font-mono text-sm cursor-pointer"
+                       />
+                    </div>
+                )}
                 
-                <div 
-                   onClick={() => {
-                      if (isInboxMode) setIsInboxMode(false);
-                      setTimeout(() => {
-                            try {
-                                timeInputRef.current?.showPicker();
-                            } catch (err) {
-                                timeInputRef.current?.focus();
-                            }
-                       }, 50);
-                   }}
-                   className={`flex-1 bg-zinc-900/50 border border-zinc-800 rounded-sm p-3 flex items-center gap-3 focus-within:border-zinc-600 transition-colors cursor-pointer ${isInboxMode ? 'opacity-70' : ''}`}
-                >
-                   <Clock size={16} className="text-zinc-500 shrink-0" />
-                   <input
-                     ref={timeInputRef}
-                     type="time"
-                     value={time}
-                     onChange={(e) => {
-                         setTime(e.target.value);
-                         if(e.target.value) setIsInboxMode(false);
-                     }}
-                     className="bg-transparent text-white w-full outline-none font-mono text-sm cursor-pointer"
-                   />
-                </div>
+                {/* Time Input (Hide for Stay as it has Checkin/out times above) */}
+                {selectedType !== 'stay' && (
+                    <div 
+                       onClick={() => {
+                          if (isInboxMode) setIsInboxMode(false);
+                          setTimeout(() => {
+                                try {
+                                    timeInputRef.current?.showPicker();
+                                } catch (err) {
+                                    timeInputRef.current?.focus();
+                                }
+                           }, 50);
+                       }}
+                       className={`flex-1 bg-zinc-900/50 border border-zinc-800 rounded-sm p-3 flex items-center gap-3 focus-within:border-zinc-600 transition-colors cursor-pointer ${isInboxMode ? 'opacity-70' : ''}`}
+                    >
+                       <Clock size={16} className="text-zinc-500 shrink-0" />
+                       <input
+                         ref={timeInputRef}
+                         type="time"
+                         value={time}
+                         onChange={(e) => {
+                             setTime(e.target.value);
+                             if(e.target.value) setIsInboxMode(false);
+                         }}
+                         className="bg-transparent text-white w-full outline-none font-mono text-sm cursor-pointer"
+                       />
+                    </div>
+                )}
              </div>
           </div>
 

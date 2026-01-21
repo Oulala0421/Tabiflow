@@ -81,10 +81,22 @@ export default function App() {
 
   // Auto-switch date if current one becomes empty, OR if new date added
   useEffect(() => {
-      // Get all valid dates
+      // Get all valid dates (expanding ranges)
       const scheduledDates = Array.from(new Set(items
         .filter(i => i.status !== 'Inbox' && i.date)
-        .map(i => i.date)
+        .flatMap(i => {
+            if (i.endDate && i.endDate > i.date) {
+                const range = [];
+                let current = new Date(i.date);
+                const end = new Date(i.endDate);
+                while (current <= end) {
+                    range.push(current.toISOString().split('T')[0]);
+                    current.setDate(current.getDate() + 1);
+                }
+                return range;
+            }
+            return [i.date];
+        })
       )).sort();
 
       if (scheduledDates.length === 0) return;
@@ -112,8 +124,26 @@ export default function App() {
   // Filter and Sort for Timeline
   const timelineItems = useMemo(() => {
      return items
-        .filter(item => item.date === selectedDate && item.status !== 'Inbox')
-        .sort((a, b) => a.time.localeCompare(b.time));
+        .filter(item => {
+            if (item.status === 'Inbox') return false;
+            
+            // Simple match
+            if (item.date === selectedDate) return true;
+            
+            // Range match (for stay)
+            if (item.endDate && item.date <= selectedDate && item.endDate >= selectedDate) {
+                return true;
+            }
+            
+            return false;
+        })
+        .sort((a, b) => {
+             // If multi-day item is NOT check-in day, it should probably be near top or bottom?
+             // Or just sort by time.
+             // Special case: If it's a "Stay Over" day (not start/end), it has no time really.
+             // But existing sort uses time.
+             return a.time.localeCompare(b.time);
+        });
   }, [items, selectedDate]);
   
   const dailyCost = useMemo(() => {
@@ -377,6 +407,7 @@ export default function App() {
               heroItem={heroItem}
               items={displayTimelineItems}
               onSelectItem={setSelectedItem}
+              selectedDate={selectedDate} // Pass context
            />
         ) : (
             <InboxView 

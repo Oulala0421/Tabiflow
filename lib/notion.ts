@@ -112,8 +112,12 @@ export const getItinerary = async (): Promise<ItineraryItem[]> => {
 
       // Extract Date & Time
       const rawDate = props["日期"]?.date?.start || new Date().toISOString();
+      // Extract optional end date
+      const rawEndDate = props["日期"]?.date?.end || null;
+      
       const dateObj = new Date(rawDate);
       const dateStr = rawDate.split("T")[0]; // YYYY-MM-DD
+      const endDateStr = rawEndDate ? rawEndDate.split("T")[0] : undefined; 
       const hasTime = rawDate.includes("T");
       const timeStr = hasTime 
         ? dateObj.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false }) 
@@ -217,6 +221,7 @@ export const getItinerary = async (): Promise<ItineraryItem[]> => {
         id: typedPage.id,
         title,
         date: dateStr,
+        endDate: endDateStr,
         time: timeStr,
         status,
         area,
@@ -248,6 +253,7 @@ export const createPage = async (data: {
   title: string;
   url?: string;
   date?: string;
+  endDate?: string;
   time?: string;
   area?: string;
   status?: string;
@@ -290,6 +296,7 @@ export const createPage = async (data: {
       properties["日期"] = {
         date: {
           start: startInfo,
+          end: data.endDate || undefined, // Add endDate
         },
       };
     }
@@ -410,6 +417,7 @@ export const updatePage = async (
     categories?: string[];
     status?: string;
     date?: string;
+    endDate?: string;
     time?: string;
     cost?: number;
     transport?: any;
@@ -506,6 +514,7 @@ export const updatePage = async (
       properties["日期"] = {
         date: {
           start: startInfo,
+          end: updates.endDate
         },
       };
     }

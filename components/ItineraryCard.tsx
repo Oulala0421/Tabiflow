@@ -15,16 +15,43 @@ interface ItineraryCardProps {
     item: ExtendedItineraryItem;
     prevItem?: ExtendedItineraryItem;
     onClick: (item: ExtendedItineraryItem) => void;
+    contextDate?: string;
 }
 
-export const ItineraryCard = ({ item, prevItem, onClick }: ItineraryCardProps) => {
-    // Time Gap Logic
+export const ItineraryCard = ({ item, prevItem, onClick, contextDate }: ItineraryCardProps) => {
+    // Multi-day Logic
+    const isStay = item.type === 'stay';
+    const isCheckIn = isStay && (!contextDate || item.date === contextDate);
+    const isCheckOut = isStay && contextDate && item.endDate === contextDate;
+    const isStayOver = isStay && contextDate && !isCheckIn && !isCheckOut;
+
+    let displayTime = item.time;
+    let displayTitle = item.title;
+    let opacityClass = "";
+
+    if (isStay) {
+        if (isCheckIn) {
+            displayTime = item.accommodation?.checkIn || "15:00";
+        } else if (isCheckOut) {
+            displayTime = item.accommodation?.checkOut || "11:00";
+            displayTitle = `退房: ${item.title}`;
+            opacityClass = "opacity-60 grayscale-[0.5]";
+        } else if (isStayOver) {
+             displayTime = "全日";
+             displayTitle = `續住: ${item.title}`;
+             opacityClass = "opacity-80";
+        }
+    }
+
+    // Time Gap Logic (Skip for StayOver)
     let showGap = false;
     let gapMinutes = 0;
     
-    if (prevItem && prevItem.time !== 'TBD' && item.time !== 'TBD') {
+    if (prevItem && prevItem.time !== 'TBD' && item.time !== 'TBD' && !isStayOver) {
+        // Use displayTime if valid time string for gap calculation
+        const currentTime = (isCheckOut && displayTime) ? displayTime : item.time;
         const prevMins = parseMinutes(prevItem.time);
-        const currMins = parseMinutes(item.time);
+        const currMins = parseMinutes(currentTime);
         gapMinutes = currMins - prevMins;
         // Threshold: 30 mins
         if (gapMinutes > 30) {
@@ -53,11 +80,11 @@ export const ItineraryCard = ({ item, prevItem, onClick }: ItineraryCardProps) =
 
             <motion.div 
             variants={fadeInUp}
-            className="relative flex items-center gap-4 group cursor-pointer"
+            className={`relative flex items-center gap-4 group cursor-pointer ${opacityClass}`}
             onClick={() => onClick(item)}
             >
             <div className="w-12 text-right">
-                <span className={`text-sm font-mono font-medium block ${item.status === 'Done' ? 'text-zinc-600 line-through' : 'text-zinc-500'}`}>{item.time}</span>
+                <span className={`text-sm font-mono font-medium block ${item.status === 'Done' ? 'text-zinc-600 line-through' : (isCheckOut ? 'text-zinc-500' : 'text-zinc-500')}`}>{displayTime}</span>
             </div>
 
             <div className="relative z-10 flex-shrink-0">
@@ -87,7 +114,7 @@ export const ItineraryCard = ({ item, prevItem, onClick }: ItineraryCardProps) =
 
             <div className="flex-1 border-b border-zinc-900 pb-6 pt-1 group-last:border-0">
                 <div className="flex justify-between items-start">
-                    <h3 className={`font-medium text-base transition-colors ${item.status === 'Done' ? 'text-zinc-500 line-through' : 'text-zinc-200 group-hover:text-white'}`}>{item.title}</h3>
+                    <h3 className={`font-medium text-base transition-colors ${item.status === 'Done' ? 'text-zinc-500 line-through' : 'text-zinc-200 group-hover:text-white'}`}>{displayTitle}</h3>
                     {item.cost && item.cost > 0 && (
                         <span className="text-[10px] font-mono text-zinc-600 mt-1">¥{item.cost.toLocaleString()}</span>
                     )}
@@ -159,7 +186,7 @@ export const ItineraryCard = ({ item, prevItem, onClick }: ItineraryCardProps) =
                      </div>
                 )}
 
-                {item.type === 'stay' && item.accommodation && (
+                {(item.type === 'stay' && item.accommodation && !isCheckOut && !isStayOver) && (
                     <div className="my-2 p-2 bg-zinc-900/50 rounded border border-zinc-800/50 flex items-center gap-4">
                         <div className="w-6 h-6 rounded flex items-center justify-center bg-purple-500/10 text-purple-400 shrink-0">
                              <BedDouble size={12} />

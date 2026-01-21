@@ -138,11 +138,31 @@ export default function App() {
             return false;
         })
         .sort((a, b) => {
-             // If multi-day item is NOT check-in day, it should probably be near top or bottom?
-             // Or just sort by time.
-             // Special case: If it's a "Stay Over" day (not start/end), it has no time really.
-             // But existing sort uses time.
-             return a.time.localeCompare(b.time);
+             // Helper to get effective sort time
+             const getSortTime = (item: ExtendedItineraryItem) => {
+                 const isStay = item.type === 'stay';
+                 if (!isStay) return item.time;
+
+                 const isCheckIn = !selectedDate || item.date === selectedDate;
+                 const isCheckOut = selectedDate && item.endDate === selectedDate;
+                 const isStayOver = selectedDate && !isCheckIn && !isCheckOut;
+
+                 if (isCheckIn) return item.accommodation?.checkIn || item.time || "15:00";
+                 if (isCheckOut) return item.accommodation?.checkOut || "11:00";
+                 // Stay Over -> Force to bottom (or top)
+                 // User said "most top or most bottom". 
+                 // Let's put it at the top ("00:00") so it acts like a header for the day.
+                 if (isStayOver) return "00:00"; 
+                 
+                 return item.time;
+             };
+
+             const timeA = getSortTime(a);
+             const timeB = getSortTime(b);
+
+             if (timeA === "TBD") return 1;
+             if (timeB === "TBD") return -1;
+             return timeA.localeCompare(timeB);
         });
   }, [items, selectedDate]);
   
@@ -313,6 +333,7 @@ export default function App() {
         status: data.status,
         mapsUrl: data.mapsUrl,
         date: data.date,
+        endDate: data.endDate,
         summary: summaryText,
         cost: data.cost,
         categories: [getTypeLabel(type)],

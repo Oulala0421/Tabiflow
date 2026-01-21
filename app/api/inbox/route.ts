@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { 
-        url, title, status, date, time, area, categories, summary, mapsUrl, cost, 
+        url, title, status, date, endDate, time, area, categories, summary, mapsUrl, cost, 
         transportMode, accommodation, transport: transportBody 
     } = body;
 
@@ -55,6 +55,7 @@ export async function POST(req: NextRequest) {
         status: status || "Inbox",
         aiProcessing: "Pending",
         date,
+        endDate,
         time,
         area,
         categories,

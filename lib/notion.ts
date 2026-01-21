@@ -514,7 +514,7 @@ export const updatePage = async (
       properties["日期"] = {
         date: {
           start: startInfo,
-          end: updates.endDate
+          end: updates.endDate || undefined
         },
       };
     }

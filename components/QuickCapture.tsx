@@ -433,50 +433,53 @@ export const QuickCapture = ({
                                 />
                              </div>
                           </div>
-                      ) : transportMode.includes("計程車") ? (
-                          // Taxi Inputs
-                          <div className="bg-zinc-900/50 border border-zinc-800 rounded-sm p-2 flex items-center gap-2">
-                                <span className="text-zinc-600 text-xs whitespace-nowrap">抵達時間</span>
-                                <input
-                                  type="time"
-                                  value={arrivalTime}
-                                  onChange={(e) => setArrivalTime(e.target.value)}
-                                  className="bg-transparent text-white w-full outline-none font-mono text-xs text-center"
-                                />
-                           </div>
                       ) : (
-                          // Train Inputs (Hidden for Simple Modes)
-                          !["公車", "步行"].some(m => transportMode.includes(m)) && (
-                              <div className="grid grid-cols-3 gap-2">
-                                <div className="bg-zinc-900/50 border border-zinc-800 rounded-sm p-2 flex items-center gap-2">
-                                   <span className="text-zinc-600 text-xs whitespace-nowrap">月台</span>
-                                   <input
-                                     value={platform}
-                                     onChange={(e) => setPlatform(e.target.value)}
-                                     placeholder="-"
-                                     className="bg-transparent text-white w-full outline-none font-mono text-xs text-center"
-                                   />
-                                </div>
-                                <div className="bg-zinc-900/50 border border-zinc-800 rounded-sm p-2 flex items-center gap-2">
-                                   <span className="text-zinc-600 text-xs whitespace-nowrap">車廂</span>
-                                   <input
-                                     value={car}
-                                     onChange={(e) => setCar(e.target.value)}
-                                     placeholder="-"
-                                     className="bg-transparent text-white w-full outline-none font-mono text-xs text-center"
-                                   />
-                                </div>
-                                <div className="bg-zinc-900/50 border border-zinc-800 rounded-sm p-2 flex items-center gap-2">
-                                   <span className="text-zinc-600 text-xs whitespace-nowrap">座位</span>
-                                   <input
-                                     value={seat}
-                                     onChange={(e) => setSeat(e.target.value)}
-                                     placeholder="-"
-                                     className="bg-transparent text-white w-full outline-none font-mono text-xs text-center"
-                                   />
-                                </div>
-                              </div>
-                          )
+                          // Unified Non-Flight Inputs
+                          <div className="space-y-2">
+                              {/* Arrival Time (Universal) */}
+                              <div className="bg-zinc-900/50 border border-zinc-800 rounded-sm p-2 flex items-center gap-2">
+                                    <span className="text-zinc-600 text-xs whitespace-nowrap">抵達時間</span>
+                                    <input
+                                      type="time"
+                                      value={arrivalTime}
+                                      onChange={(e) => setArrivalTime(e.target.value)}
+                                      className="bg-transparent text-white w-full outline-none font-mono text-xs text-center"
+                                    />
+                               </div>
+
+                               {/* Train Specifics (Hidden for Bus/Taxi/Walk) */}
+                               {!["公車", "計程車", "步行"].some(m => transportMode.includes(m)) && (
+                                  <div className="grid grid-cols-3 gap-2">
+                                    <div className="bg-zinc-900/50 border border-zinc-800 rounded-sm p-2 flex items-center gap-2">
+                                       <span className="text-zinc-600 text-xs whitespace-nowrap">月台</span>
+                                       <input
+                                         value={platform}
+                                         onChange={(e) => setPlatform(e.target.value)}
+                                         placeholder="-"
+                                         className="bg-transparent text-white w-full outline-none font-mono text-xs text-center"
+                                       />
+                                    </div>
+                                    <div className="bg-zinc-900/50 border border-zinc-800 rounded-sm p-2 flex items-center gap-2">
+                                       <span className="text-zinc-600 text-xs whitespace-nowrap">車廂</span>
+                                       <input
+                                         value={car}
+                                         onChange={(e) => setCar(e.target.value)}
+                                         placeholder="-"
+                                         className="bg-transparent text-white w-full outline-none font-mono text-xs text-center"
+                                       />
+                                    </div>
+                                    <div className="bg-zinc-900/50 border border-zinc-800 rounded-sm p-2 flex items-center gap-2">
+                                       <span className="text-zinc-600 text-xs whitespace-nowrap">座位</span>
+                                       <input
+                                         value={seat}
+                                         onChange={(e) => setSeat(e.target.value)}
+                                         placeholder="-"
+                                         className="bg-transparent text-white w-full outline-none font-mono text-xs text-center"
+                                       />
+                                    </div>
+                                  </div>
+                               )}
+                          </div>
                       )}
                      
                      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">

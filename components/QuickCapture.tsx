@@ -142,7 +142,7 @@ export const QuickCapture = ({
   const titleInputRef = useRef<HTMLInputElement>(null);
   const urlInputRef = useRef<HTMLInputElement>(null);
   const areaInputRef = useRef<HTMLInputElement>(null);
-  const areaInputRef = useRef<HTMLInputElement>(null);
+
   const dateInputRef = useRef<HTMLInputElement>(null);
   const endDateInputRef = useRef<HTMLInputElement>(null);
   const timeInputRef = useRef<HTMLInputElement>(null);

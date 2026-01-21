@@ -92,9 +92,25 @@ export const MainHeader = ({
               className="flex items-center gap-2 px-5 pb-4 overflow-x-auto no-scrollbar"
           >
           {(() => {
-              // Computed Dates from Items
+              // Computed Dates from Items (Expanded for ranges)
               const scheduledItems = items.filter(i => i.status !== 'Inbox' && i.date);
-              const uniqueDates = Array.from(new Set(scheduledItems.map(i => i.date))).sort();
+              const uniqueDates = Array.from(new Set(scheduledItems.flatMap(i => {
+                    // Start with the primary date
+                    const dates = [i.date];
+                    // Expand Range if endDate exists
+                    if (i.endDate && i.endDate > i.date) {
+                        let current = new Date(i.date);
+                        // Start loop from next day
+                        current.setDate(current.getDate() + 1);
+                        const end = new Date(i.endDate);
+                        
+                        while (current <= end) {
+                            dates.push(current.toISOString().split('T')[0]);
+                            current.setDate(current.getDate() + 1);
+                        }
+                    }
+                    return dates;
+              }))).sort();
               
               const formatDate = (dateStr: string) => {
                   try {

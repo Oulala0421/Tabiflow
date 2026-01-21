@@ -365,6 +365,7 @@ export default function App() {
            }
 
            addToast("行程已更新", 'success');
+           await fetchItems(); // Force server re-fetch
         } else {
            // [新增模式]
            const tempId = "temp_" + Date.now();
@@ -400,6 +401,7 @@ export default function App() {
            }
            
            addToast("已新增行程", 'success');
+           await fetchItems(); // Force server re-fetch
         }
       } catch (e: any) {
         console.error("HandleUpdateItem Error:", e);

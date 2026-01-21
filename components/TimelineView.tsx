@@ -79,6 +79,7 @@ export const TimelineView = ({
 
       if (isCheckIn) {
           displayTime = heroItem.accommodation?.checkIn || heroItem.time || "15:00";
+          displayTitle = `入住: ${heroItem.title}`;
       } else if (isCheckOut) {
           displayTime = heroItem.accommodation?.checkOut || "11:00";
           displayTitle = `退房: ${heroItem.title}`;

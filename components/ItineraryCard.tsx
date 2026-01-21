@@ -33,6 +33,7 @@ export const ItineraryCard = ({ item, prevItem, onClick, contextDate, currency =
     if (isStay) {
         if (isCheckIn) {
             displayTime = item.accommodation?.checkIn || "15:00";
+            displayTitle = `入住: ${item.title}`;
         } else if (isCheckOut) {
             displayTime = item.accommodation?.checkOut || "11:00";
             displayTitle = `退房: ${item.title}`;

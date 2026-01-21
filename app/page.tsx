@@ -127,21 +127,27 @@ export default function App() {
 
   // Filter and Sort for Timeline
   const timelineItems = useMemo(() => {
-     return items
-        .filter(item => {
+     const filtered = items.filter(item => {
             if (item.status === 'Inbox') return false;
-            
-            // Simple match
             if (item.date === selectedDate) return true;
-            
-            // Range match (for stay)
-            if (item.endDate && item.date <= selectedDate && item.endDate >= selectedDate) {
-                return true;
-            }
-            
+            if (item.endDate && item.date <= selectedDate && item.endDate >= selectedDate) return true;
             return false;
-        })
-        .sort((a, b) => {
+     });
+
+     const expanded = filtered.flatMap(item => {
+         const res = [item];
+         if (item.type === 'transport' && item.transport?.arrival && item.date === selectedDate) {
+             res.push({
+                 ...item,
+                 id: `${item.id}_arrival`,
+                 time: item.transport.arrival,
+                 isArrival: true
+             });
+         }
+         return res;
+     });
+
+     return expanded.sort((a, b) => {
              // Helper to get effective sort time
              const getSortTime = (item: ExtendedItineraryItem) => {
                  const isStay = item.type === 'stay';

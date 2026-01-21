@@ -43,6 +43,9 @@ export const ItineraryCard = ({ item, prevItem, onClick, contextDate, currency =
              displayTitle = `續住: ${item.title}`;
              opacityClass = "opacity-80";
         }
+    } else if (item.isArrival) {
+        displayTitle = `抵達: ${item.title}`;
+        opacityClass = "opacity-60 grayscale-[0.5]";
     }
 
     // Time Gap Logic (Skip for StayOver)

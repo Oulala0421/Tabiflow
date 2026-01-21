@@ -48,6 +48,7 @@ export interface ItineraryItem {
 export interface ExtendedItineraryItem extends ItineraryItem {
     cost?: number;
     currency?: 'JPY' | 'TWD';
+    isArrival?: boolean; // Virtual flag for transport arrival cards
 }
 
 // Partial interface representing the raw Notion structure
